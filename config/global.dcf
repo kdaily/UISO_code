@@ -3,6 +3,6 @@ data_loading: on
 munging: off
 logging: on
 load_libraries: on
-libraries: reshape, plyr, ggplot2, affy, annotate, limma, hgu133a2.db, sva, arrayQualityMetrics, affyQCReport, pvclust, snow, cluster, lattice, randomForest, ROCR, ggbiplot, rgl, sigclust, genefilter, GSA, vennerable
+libraries: reshape, plyr, ggplot2, affy, annotate, limma, hgu133a2.db, sva, arrayQualityMetrics, affyQCReport, snow, cluster, randomForest, sigclust, genefilter, GSA
 as_factors: on
 data_tables: off
