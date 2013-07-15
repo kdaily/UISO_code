@@ -6,6 +6,10 @@
 
 # RStudio projecs
 *.Rproj
+.Rproj.user
+
+# ProjectTemplate cache
+cache/*
 
 # LaTeX
 *.acn
@@ -40,4 +44,3 @@
 *.vrb
 *.xdy
 *.tdo
-.Rproj.user
