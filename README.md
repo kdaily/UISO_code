@@ -12,3 +12,10 @@ All other dependencies can be found in:
 ```
 config/global.cfg
 ```
+
+First, set your working directory to the root of the respository (where the README.md is). Then, to run everything (WARNING: some things require a lot of memory).
+
+```{r}
+library(ProjectTemplate)
+load.project()
+```
