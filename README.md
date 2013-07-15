@@ -1,17 +1,14 @@
-Title
+Supplementary Code for "The UISO Cell Line is Not Representative of Merkel Cell Carcinoma"
 ========================================================
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring web pages (click the **MD** toolbar button for help on Markdown).
+This repository contains all of the code necessary to analyze and produce figures for the publication.
 
-When you click the **Knit HTML** button a web page will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+First, it requires ProjectTemplate:
 
-```{r}
-summary(cars)
+http://projecttemplate.net/index.html
+
+All other dependencies can be found in:
+
 ```
-
-You can also embed plots, for example:
-
-```{r fig.width=7, fig.height=6}
-plot(cars)
+config/global.cfg
 ```
-
