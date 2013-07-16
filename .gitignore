@@ -4,6 +4,10 @@
 # Example code in package build process
 *-Ex.R
 
+# RMarkdown for reports
+reports/*.md
+reports/*.html
+
 # RStudio projecs
 *.Rproj
 .Rproj.user
