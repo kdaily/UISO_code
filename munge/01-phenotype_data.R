@@ -1,9 +1,12 @@
 # Clinical data is read in when loading the project from the data directory
 
 clinical.data <- transform(clinical.data,
-                           MCPyV.status=factor(MCPyV.status, levels=c(0,1), 
+                           MCPyV.status=factor(MCPyV.status, levels=c("negative","positive"), 
                                                labels=c("Virus negative", "Virus positive"),
-                                               ordered=TRUE))
+                                               ordered=TRUE),
+                           classic=factor(classic, levels=c("UISOCellLine", "ClassicCellLine", "Tumor"), 
+                                               ordered=TRUE),
+                           batch=factor(batch))
 
 clinical.data$type <- with(clinical.data, paste(cancertype, sample.type, sep=""))
 clinical.data$type <- factor(clinical.data$type,
