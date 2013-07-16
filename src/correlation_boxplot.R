@@ -6,18 +6,10 @@ dataset.original <- eset.original.filter
 which.MCCtumor <- grep("MT.*", sampleNames(dataset.original))
 which.mkl1 <- grep("Mkl.*", sampleNames(dataset.original))
 which.waga <- grep("Waga.*", sampleNames(dataset.original))
-which.uiso <- grep("UISO_late.*", sampleNames(dataset.original))
+which.uiso <- grep("UISO.*", sampleNames(dataset.original))
 
 keep <- c(which.MCCtumor, which.mkl1, which.waga, which.uiso)
 dataset.original <- dataset.original[, keep]
-
-pData(dataset.original)$sample_class <- factor(rep(c("Tumor", "Mkl-1", "WaGa", "UISO"),
-                                                   c(length(which.MCCtumor), length(which.mkl1), length(which.waga), length(which.uiso))))
-
-pData(dataset.original)$sample_class <- factor(c(rep("Tumor", length(which.MCCtumor)),
-                                                 rep("Mkl-1", length(which.mkl1)),
-                                                 rep("WaGa", length(which.waga)),
-                                                 rep("UISO", length(which.uiso))))
 
 dataset <- dataset.original
 
@@ -27,7 +19,6 @@ dataset.cor <- cor(exprs(dataset), method='spearman')
 # Keep only the necessary columns and rows and
 # set self correlation values (including within group) to NA
 dataset.cor[upper.tri(dataset.cor, diag=TRUE)] <- NA
-# upperTriangle(dataset.cor, diag=TRUE) <- NA
 dataset.cor[grep("Mkl", rownames(dataset.cor)), grep("Mkl", rownames(dataset.cor))] <- NA
 dataset.cor[grep("Waga", rownames(dataset.cor)), grep("Waga", rownames(dataset.cor))] <- NA
 dataset.cor[grep("UISO", rownames(dataset.cor)), grep("UISO", rownames(dataset.cor))] <- NA
@@ -43,23 +34,22 @@ dataset.cor.melted <- melt(dataset.cor, id.vars=c("sample"), na.rm=TRUE)
 dataset.cor.melted$variable <- factor(gsub("\\.", "-", dataset.cor.melted$variable))
 
 # Get sample_class from the phenotypeData based on the sample column
-dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset)[, c("sample", "sample_class")], by.x="sample", by.y="sample")
+dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset)[, c("sample", "class")], by.x="sample", by.y="sample")
 
-dataset.cor.melted$sample_class <- factor(dataset.cor.melted$sample_class, 
-                                          levels=c("Mkl-1", "WaGa", "UISO"),
-                                          labels=c("Mkl-1", "WaGa", "UISO"),
-                                          ordered=TRUE)
+dataset.cor.melted$class <- factor(dataset.cor.melted$class, 
+                                   levels=c("Mkl1", "WaGa", "UISO"),
+                                   ordered=TRUE)
 
 # Get everything from the phenotypeData again, based on the variable column
 dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset.original), by.x="variable", by.y="sample")
-dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'sample_class.x', "sample_class.y", "MCPyV.status")]
+dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'class.x', "class.y", "MCPyV.status")]
 
 # Add some grouping factors
 dataset.cor.melted <- transform(dataset.cor.melted,
-                                comparison=factor(with(dataset.cor.melted, paste(sample_class.x, sample_class.y, sep=".")),
-                                                  levels=c("Mkl-1.Tumor", "WaGa.Tumor", "UISO.Tumor", "WaGa.Mkl-1", "UISO.Mkl-1", "UISO.WaGa"),
+                                comparison=factor(with(dataset.cor.melted, paste(class.x, class.y, sep=".")),
+                                                  levels=c("Mkl1.Tumor", "WaGa.Tumor", "UISO.Tumor", "WaGa.Mkl1", "UISO.Mkl1", "UISO.WaGa"),
                                                   ordered=TRUE),
-                                tumorORnot=factor(dataset.cor.melted$sample_class.y == "Tumor", #c("MCC Tumor", "SCLC Tumor"), 
+                                tumorORnot=factor(dataset.cor.melted$class.y == "Tumor", #c("MCC Tumor", "SCLC Tumor"), 
                                                   labels=c("Cell line vs. cell line", "Cell line vs. tumor")))
 
 
