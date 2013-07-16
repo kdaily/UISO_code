@@ -1,15 +1,14 @@
 ## Heatmap of MCC and SCLC markers
 
 ## Set up all comparisons of individual cell lines and tumor samples
-MCC.sample.names <- c(grep("MT.*", sampleNames(eset.original.filter), value=TRUE),
-                      grep("LT.*", sampleNames(eset.original.filter), value=TRUE),
-                      grep("Mkl.*", sampleNames(eset.original.filter), value=TRUE),
-                      grep("Waga.*", sampleNames(eset.original.filter), value=TRUE),
-                      grep("UISO.*", sampleNames(eset.original.filter), value=TRUE))
+# MCC.sample.names <- c(grep("MT.*", sampleNames(eset.original.filter), value=TRUE),
+#                       grep("LT.*", sampleNames(eset.original.filter), value=TRUE),
+#                       grep("Mkl.*", sampleNames(eset.original.filter), value=TRUE),
+#                       grep("Waga.*", sampleNames(eset.original.filter), value=TRUE),
+#                       grep("UISO.*", sampleNames(eset.original.filter), value=TRUE))
 
-dataset <- eset.original.filter[, MCC.sample.names]
-# sampleNames(dataset) <- gsub("_late", "", sampleNames(dataset))
-# pData(dataset)$sample <- gsub("_late", "", pData(dataset)$sample)
+dataset <- eset.original.filter #[, MCC.sample.names]
+
 
 # select by probe
 controls <- c("213953_at", "204697_s_at", "212843_at", "201313_at", "209016_s_at", "221916_at", "221336_at")
@@ -58,5 +57,4 @@ p <- p + theme(axis.text.x=element_text(size=16, angle=270, vjust=0.5), axis.tex
                legend.title=element_text(size=16),
                strip.text.x=element_text(size=20)) ## + coord_flip()
 
-print(p)
-ggsave("graphs/heatmap_markers.pdf", width=20, height=5, dpi=300)
+ggsave("graphs/heatmap_markers.pdf", p, width=20, height=5, dpi=300)
