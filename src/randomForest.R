@@ -22,7 +22,7 @@ dataset.predict <- dataset[, samplenames.predict]
 ## Use balanced sample size with the size of the smaller sample
 sample.size <- c(8,8)
 
-rf.eset <- randomForest(x=edata.train, y=classes.train, ntree=1000, ## mtry=10,
+rf.eset <- randomForest(x=edata.train, y=classes.train, ntree=1000,
                         sampsize=sample.size, replace=TRUE, strata=classes.train,
                         importance=FALSE, proximity=TRUE, keep.trees=FALSE, keep.inbag=TRUE,
                         do.trace=100)

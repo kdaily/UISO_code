@@ -1,9 +1,9 @@
 data_loading: on
 cache_loading: off
 recursive_loading: off
-munging: on
+munging: off
 logging: on
 load_libraries: on
-libraries: reshape, plyr, ggplot2, xtable, grid, affy, annotate, limma, hgu133a2.db, sva, arrayQualityMetrics, affyQCReport, snow, cluster, randomForest, sigclust, genefilter, GSA, venneuler
+libraries: reshape, plyr, ggplot2, xtable, grid, affy, annotate, limma, hgu133a2.db, sva, arrayQualityMetrics, affyQCReport, snow, cluster, randomForest, sigclust, genefilter, GSA, venneuler, GEOquery
 as_factors: on
 data_tables: off

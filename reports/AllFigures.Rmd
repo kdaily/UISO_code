@@ -1,0 +1,518 @@
+All figures
+========================================================
+
+```{r load, message=FALSE, warning=FALSE, echo=FALSE}
+# Here's how to compile this file in R, assuming your current directory is the repository root:
+
+# library(knitr)
+# knit("./reports/AllFigures.Rmd", encoding="utf-8")
+
+library(affy)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(cluster)
+library(xtable)
+library(MASS)
+
+options(xtable.type="html")
+```
+
+```{r loadexpr, echo=FALSE}
+load("../cache/eset.original.filter.RData")
+dataset <- eset.original.filter
+```
+
+
+```{r dopca, message=FALSE, warning=FALSE, echo=FALSE}
+pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
+pc <- pca$x
+```
+
+PCA plot on MCC/SCLC tumor samples and MCC cell lines, using PC1 and PC2
+--------------------
+
+```{r pcascatter, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+## Plot on PC1 and PC2
+pc.data <- data.frame(pc, sample=rownames(pc))
+rownames(pc.data) <- rownames(pc)
+pc.data <- cbind(pc.data[rownames(pc), ], pData(dataset)[rownames(pc), ])
+
+p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(color=cancertype, 
+                                                         shape=factor(sample.type, 
+                                                                      labels=c("Cell line", "Tissue"))),
+                                                     size=6)
+p <- p + xlim(-75, 200)
+p <- p + geom_text(aes(label=rownames(pc.data)), hjust=0.8, vjust=-0.75, size=4)
+p <- p + scale_colour_brewer("Cancer type", palette="Set1")
+p <- p + scale_shape_manual("Sample type", values=c(18,16))
+p <- p + labs(x="Principal component 1", y="Principal component 2")
+p <- p + theme_bw() + theme(legend.position=c(0.85, 0.85),
+                           legend.title=element_text(size=14),
+                           legend.text=element_text(size=12),
+                           legend.background=element_rect(colour="black"),
+                           axis.title.x=element_text(size=14), axis.title.y=element_text(size=14, angle=90),
+                           axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
+                           panel.background=element_rect())
+
+print(p)
+
+ggsave("../graphs/pc1v2.pdf", p, width=10, height=10)
+
+```
+
+Variance plot of PCA on MCC and SCLC tumor samples and cell lines
+----------------------
+
+```{r pcavariance, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10}
+## Proportion of variance
+pca.summary <- summary(pca)
+pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary$importance[2, ]))
+pca.var <- head(pca.var, 10)
+pca.var <- transform(pca.var, pc=factor(pc, levels=names(pca.summary$importance[2, ]), ordered=TRUE))
+p <- ggplot(pca.var, aes(x=pc, y=variance)) + geom_bar(stat="identity") + labs(x="Principal Component", y="Variance")
+p <- p + theme_bw() + theme(axis.text.x=element_text(size=10, angle=270), 
+                            axis.text.y=element_text(size=10),
+                            legend.position="none") ## + coord_flip()
+
+print(p)
+ggsave("../graphs/pc1v2.var.pdf", p, width=8, height=8)
+
+```
+
+
+Correlation box plot of MCC/SCLC tumor samples and MCC cell lines
+-------------------
+
+```{r corrboxplot, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=7}
+
+dataset.original <- eset.original.filter
+
+# Subset of samples and make sample classes
+which.MCCtumor <- grep("MT.*", sampleNames(dataset.original))
+which.mkl1 <- grep("Mkl.*", sampleNames(dataset.original))
+which.waga <- grep("Waga.*", sampleNames(dataset.original))
+which.uiso <- grep("UISO.*", sampleNames(dataset.original))
+
+keep <- c(which.MCCtumor, which.mkl1, which.waga, which.uiso)
+dataset.original <- dataset.original[, keep]
+
+dataset <- dataset.original
+
+# Compute correlation
+dataset.cor <- cor(exprs(dataset), method='spearman')
+
+# Keep only the necessary columns and rows and
+# set self correlation values (including within group) to NA
+dataset.cor[upper.tri(dataset.cor, diag=TRUE)] <- NA
+dataset.cor[grep("Mkl", rownames(dataset.cor)), grep("Mkl", rownames(dataset.cor))] <- NA
+dataset.cor[grep("Waga", rownames(dataset.cor)), grep("Waga", rownames(dataset.cor))] <- NA
+dataset.cor[grep("UISO", rownames(dataset.cor)), grep("UISO", rownames(dataset.cor))] <- NA
+
+exclude.rows <- -(1:(length(which.MCCtumor)))
+dataset.cor <- dataset.cor[exclude.rows, ]
+
+# Reshape the data
+dataset.cor <- transform(dataset.cor, sample=rownames(dataset.cor))
+dataset.cor.melted <- melt(dataset.cor, id.vars=c("sample"), na.rm=TRUE)
+
+# For some reason, melt changed the Mkl-1's name...
+dataset.cor.melted$variable <- factor(gsub("\\.", "-", dataset.cor.melted$variable))
+
+# Get sample_class from the phenotypeData based on the sample column
+dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset)[, c("sample", "class")], by.x="sample", by.y="sample")
+
+dataset.cor.melted$class <- factor(dataset.cor.melted$class, 
+                                   levels=c("Mkl1", "WaGa", "UISO"),
+                                   ordered=TRUE)
+
+# Get everything from the phenotypeData again, based on the variable column
+dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset.original), by.x="variable", by.y="sample")
+dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'class.x', "class.y", "MCPyV.status")]
+
+# Add some grouping factors
+dataset.cor.melted <- transform(dataset.cor.melted,
+                                comparison=factor(with(dataset.cor.melted, paste(class.x, class.y, sep=".")),
+                                                  levels=c("Mkl1.Tumor", "WaGa.Tumor", "UISO.Tumor", "WaGa.Mkl1", "UISO.Mkl1", "UISO.WaGa"),
+                                                  ordered=TRUE),
+                                tumorORnot=factor(dataset.cor.melted$class.y == "Tumor", #c("MCC Tumor", "SCLC Tumor"), 
+                                                  labels=c("Cell line vs. cell line", "Cell line vs. tumor")))
+
+
+# plot
+p <- ggplot(dataset.cor.melted, aes(x=comparison, y=value))
+p <- p + geom_boxplot(notch=FALSE, outlier.size=0)
+p <- p + geom_jitter(aes(color=MCPyV.status, shape=MCPyV.status), position=position_jitter(width=0.1), alpha=0.6)
+p <- p + facet_grid(. ~ tumorORnot, scales="free_x")
+p <- p + labs(x="", y=expression(Correlation~(rho)))
+p <- p + scale_color_brewer(palette='Set1')
+p <- p + guides(colour=guide_legend("Tumor MCV Status"), shape=guide_legend("Tumor MCV Status"))
+p <- p + ylim(c(0.5,1))
+p <- p + theme_bw() + theme(axis.text=element_text(size=20), 
+                            legend.title=element_text(size=20),
+                            legend.text=element_text(size=20),
+                            legend.position=c(0.6, 0.2),
+                            axis.title.x=element_text(size=20),
+                            axis.title.x=element_text(size=20),
+                            axis.title.y=element_text(size=20, angle=90),
+                            strip.text.x=element_text(size=24))
+
+print(p)
+
+ggsave("../graphs/corrboxplot.pdf", p, width=16, height=8)
+
+```                        
+
+Hierarchical clustering on MCC/SCLC tumor samples and MCC cell lines
+------------------------
+
+```{r hierclust, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
+dataset <- eset.original.filter
+d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
+plot(agnes(d, diss=TRUE, method='average'), which.plots=2, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
+
+pdf("../graphs/hier.pdf", width=12, height=6)
+plot(agnes(d, diss=TRUE, method='average'), which.plots=2, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
+dev.off()
+
+```
+
+Random forest using MCC/SCLC tumor data applied to MCC/UISO lines
+========================================================
+
+```{r loadrf, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+load("../cache/rf.eset.RData")
+load("../cache/rf.predict.RData")
+load("../cache/rf.eset.unsupervised.RData")
+load("../cache/classes.train.RData")
+load("../cache/classes.train.unsupervised.RData")
+load("../cache/samplenames.train.RData")
+load("../cache/samplenames.train.unsupervised.RData")
+```
+
+## Cancer type error rate of random forest on MCC/SCLC tumor samples (using out-of-bag samples)
+```{r echo=FALSE, results='asis'}
+tmp <- data.frame(table(classes.train))
+class.err.rate <- as.numeric(tail(rf.eset$err.rate,1))[-1]
+tbl <- data.frame(Frequency=tmp$Freq, Error=class.err.rate)
+rownames(tbl) <- tmp$classes.train
+print(xtable(tbl))
+```
+
+## Average test set predictions of random forest applied to MCC cell lines
+``` {r testerror, echo=FALSE, results='asis'}
+rf.predict.mean <- ddply(rf.predict, "class", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
+rf.predict.mean.xtable <- xtable(rf.predict.mean)
+print(rf.predict.mean.xtable)
+```
+
+## Multi-Dimensional scaling plot of (unsupervised) random forest proximities on MCC/SCLC tumor samples and MCC cell lines
+```{r mdsrfallcelllines, fig.width=12, fig.height=12, echo=FALSE}
+
+rf.mds <- cmdscale(1 - rf.eset.unsupervised$proximity, eig=TRUE)
+
+plotdata <- data.frame(x=rf.mds$points[,1], y=rf.mds$points[,2],
+                       labels=samplenames.train.unsupervised, cancertype=classes.train.unsupervised)
+p <- ggplot()
+
+p <- p + geom_point(data=plotdata, aes(x=x, y=y, 
+                                       color=cancertype),
+                    size=5, show_guide=TRUE)
+
+p <- p + scale_colour_brewer("Cancer type", palette="Set1")
+p <- p + scale_shape_manual("Sample type", values=c(18,16))
+
+p <- p + geom_text(data=plotdata, aes(x=x, y=y, label=rownames(plotdata)),
+                   hjust=1.0, vjust=-1.25, size=4)
+
+p <- p + labs(x="Scaling component 1", y="Scaling component 2")
+p <- p + theme_bw() + theme(legend.position=c(0.85,0.5),
+                            legend.title=element_text(size=14),
+                            legend.text=element_text(size=12),
+                            legend.background=element_rect(colour="black"),
+                            panel.background = element_rect(fill = "#FFFFFF"))
+print(p)
+
+# for publication
+ggsave("figure/mdsmccsclc.pdf", p, width=8, height=8)
+```
+
+Commands to run GSEA using GSEAPreranked on the output from limma's moderated t-test
+------------------------
+
+Unfortunately, this step is difficult to automatically reproduce because GSEA writes out files to a folder with a timestamp appended. All files run with these parameters are provided.
+
+The following code will reproduce these files, but the timestamp of the output folder will be different, and you would need to change that in the following code manually.
+
+From the command line, assumes that your current directory is the repository root:
+
+```
+sh ./data/GSEA/run_GSEA.sh
+```
+
+```{r readdata, echo=FALSE}
+data <- list()
+data[['tumor.classic.pos']] <- read.table("../data/GSEA/tumor_vs_classic_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
+data[['tumor.classic.pos']]$direction <- 1
+
+data[['tumor.classic.neg']] <- read.table("../data/GSEA/tumor_vs_classic_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
+data[['tumor.classic.neg']]$direction <- -1
+
+data[['classic.variant.pos']] <- read.table("../data/GSEA/classic_vs_variant_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
+data[['classic.variant.pos']]$direction <- 1
+
+data[['classic.variant.neg']] <- read.table("../data/GSEA/classic_vs_variant_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
+data[['classic.variant.neg']]$direction <- -1
+
+data[['tumor.variant.pos']] <- read.table("../data/GSEA/tumor_vs_variant_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
+data[['tumor.variant.pos']]$direction <- 1
+
+data[['tumor.variant.neg']] <- read.table("../data/GSEA/tumor_vs_variant_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
+data[['tumor.variant.neg']]$direction <- -1
+
+merged.data <- ldply(data, function(x) x[, c("NAME", "FDR.q.val", "direction")])
+
+## Process data
+merged.data$NAME <- gsub("KEGG_", "", merged.data$NAME)
+merged.data$.id <- gsub("\\.pos|\\.neg", "", merged.data$.id)
+merged.data$FDR.q.val <- round(merged.data$FDR.q.val, 6)
+
+# fdr.thresh.init <- 0.25
+# merged.data <- subset(merged.data, FDR.q.val <= fdr.thresh.init)
+# merged.data <- subset(merged.data, FDR.q.val <= 0.95 & FDR.q.val >= 0.9)
+
+merged.data$FDR.q.val.formatted <- format.pval(merged.data$FDR.q.val, digits=4)
+
+merged.data$value <- ifelse(merged.data$direction == 1,
+                            gsub("(.*)", '<div style="color: red;">\\1</div>', merged.data$FDR.q.val),
+                            gsub("(.*)", '<div style="color: green;">\\1</div>', merged.data$FDR.q.val))
+
+fdr.thresh <- 0.05
+merged.data$value <- ifelse(merged.data$FDR.q.val <= fdr.thresh,
+                            gsub("(.*)", '<div style="font-size:150%">\\1</div>', merged.data$value),
+                            merged.data$value)
+
+  
+merged.data.wide <- cast(merged.data, NAME ~ .id, value="value")
+rownames(merged.data.wide) <- merged.data.wide$NAME
+merged.data.wide <- merged.data.wide[, -1]
+merged.data.wide <- as.data.frame(merged.data.wide)
+
+merged.data.wide.fdr <- cast(merged.data, NAME ~ .id, value="FDR.q.val")
+rownames(merged.data.wide.fdr) <- rownames(merged.data.wide)
+merged.data.wide.fdr <- merged.data.wide.fdr[, -1]
+
+merged.data.wide.fdr <- as.data.frame(apply(merged.data.wide.fdr, 2, as.numeric))
+rownames(merged.data.wide.fdr) <- rownames(merged.data.wide)
+colnames(merged.data.wide.fdr) <- colnames(merged.data.wide)
+
+## Anything that is NA is FDR = 1
+merged.data.wide.fdr[is.na(merged.data.wide.fdr)] <- 1
+
+merged.data.wide <- merged.data.wide[order(merged.data.wide.fdr$tumor.variant), ]
+
+merged.data.wide$classic.variant <- as.character(merged.data.wide$classic.variant)
+merged.data.wide$tumor.variant <- as.character(merged.data.wide$tumor.variant)
+merged.data.wide$tumor.classic <- as.character(merged.data.wide$tumor.classic)
+
+set.na <- is.na(merged.data.wide.fdr)
+merged.data.wide[set.na] <- "NS" # paste("> ", fdr.thresh, sep="")
+
+merged.data.wide <- merged.data.wide[, c("tumor.variant", "tumor.classic", "classic.variant")]
+
+colnames(merged.data.wide) <- c( "UISO vs. Tumor", "Classic vs. Tumor", "UISO vs. Classic")
+
+```
+
+## Results for GSEA, differentially expressed in the cell lines (number of pathways: `r nrow(merged.data.wide)`):
+
+To identify pathways that are affected similarly, we performed three comparisons: UISO cell line vs. tumor samples, classic cell lines vs. tumor samples, and UISO cell line vs. classic cell lines. Green values are up-regulated and red values are down-regulated. Large bold values are statistically significant (FDR-adjusted p-value < `r fdr.thresh`).
+
+```{r table.all, echo=FALSE, results='asis'} 
+print(xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c")), type='html', sanitize.text.function=I) 
+``` 
+
+
+```{r loadccle, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+load("../cache/rf.eset.allcelllines.RData")
+load("../cache/rf.eset.nouiso.predict.RData")
+load("../cache/rf.eset.nouiso.RData")
+
+classes.train.allcelllines <- rf.eset.allcelllines$y
+samplenames.train.allcelllines <- names(rf.eset.allcelllines$predicted)
+
+```
+
+## Prediction on UISO cell line samples using RF trained with CCLE + MCC cell lines
+```{r predictuiso, echo=FALSE, results='asis'}
+print(xtable(rf.eset.nouiso.predict, digits=2))
+```
+
+## Cancer Type Error Rate with CCLE + MCC cell lines
+```{r errorratesnouiso, echo=FALSE, results='asis'}
+tmp <- data.frame(table(rf.eset.nouiso$y))
+class.err.rate <- as.numeric(tail(rf.eset.nouiso$err.rate,1))[-1]
+tbl <- data.frame(Frequency=tmp$Freq, Error=class.err.rate)
+rownames(tbl) <- as.character(levels(rf.eset.nouiso$y))
+print(xtable(tbl))
+# print(xtable(tbl))
+```
+
+## Confusion Matrix with CCLE + MCC cell lines
+```{r confusionmatrixnouiso, echo=FALSE, results='asis'}
+print(xtable(rf.eset.nouiso$confusion, digits=c(rep(0, 10), 2)))
+
+``` 
+
+## Average Out-Of-Bag Votes (Per Class) with CCLE + MCC cell lines
+```{r avgvotestblnouiso, echo=FALSE, results='asis'}
+oobvotes <- data.frame(rf.eset.nouiso$votes, cancertype=rf.eset.nouiso$y)
+avgoobvotes <- ddply(oobvotes, .variables="cancertype", function(x) colMeans(x[, -ncol(x)]))
+rownames(avgoobvotes) <- avgoobvotes[, 1]
+avgoobvotes <- avgoobvotes[, -1]
+colnames(avgoobvotes) <- levels(rf.eset.nouiso$y)
+print(xtable(avgoobvotes, digits=2))
+```
+
+## Cancer Type Error Rate with all cell lines (MCC, UISO, CCLE)
+```{r errorratesccle, echo=FALSE, results='asis'}
+tmp <- data.frame(table(rf.eset.allcelllines$y))
+class.err.rate <- as.numeric(tail(rf.eset.allcelllines$err.rate,1))[-1]
+tbl <- data.frame(Frequency=tmp$Freq, Error=class.err.rate)
+rownames(tbl) <- as.character(levels(rf.eset.allcelllines$y))
+print(xtable(tbl))
+```
+
+## Confusion Matrix with all cell lines (MCC, UISO, CCLE)
+```{r confusionmatrixccle, echo=FALSE, results='asis'}
+print(xtable(rf.eset.allcelllines$confusion, digits=c(rep(0, 10), 2)))
+``` 
+
+## Average Out-Of-Bag Votes (Per Class) with all cell lines (MCC, UISO, CCLE)
+```{r avgvotestblccle, echo=FALSE, results='asis'}
+oobvotes <- data.frame(rf.eset.allcelllines$votes, cancertype=rf.eset.allcelllines$y)
+avgoobvotes <- ddply(oobvotes, .variables="cancertype", function(x) colMeans(x[, -ncol(x)]))
+rownames(avgoobvotes) <- avgoobvotes[, 1]
+avgoobvotes <- avgoobvotes[, -1]
+colnames(avgoobvotes) <- levels(rf.eset.allcelllines$y)
+print(xtable(avgoobvotes, digits=2))
+```
+
+
+## Multi-Dimensional Scaling Plot of all cell lines (MCC, UISO, CCLE)
+```{r mdsrfallcelllinesccle, fig.width=12, fig.height=12, echo=FALSE, message=FALSE, warning=FALSE}
+rf.mds <- cmdscale(1 - rf.eset.allcelllines$proximity, add=TRUE, eig=TRUE)
+
+plotdata <- data.frame(x=rf.mds$points[,1], y=rf.mds$points[,2],
+                       labels=samplenames.train.allcelllines, cancertype=classes.train.allcelllines)
+
+mcc.uisos <- grepl("UISO", rownames(plotdata))
+
+plotdata$cancertype <- as.character(plotdata$cancertype)
+plotdata$cancertype[mcc.uisos] <- "UISO"
+plotdata$cancertype <- factor(plotdata$cancertype)
+
+mcc.uisos <- grep("UISO", plotdata$labels, value=FALSE)
+
+plotdata <- transform(plotdata, predicted=rf.eset.allcelllines$predicted)
+plotdata <- transform(plotdata, correct=factor((as.character(predicted) == as.character(cancertype)), levels=c(TRUE, FALSE), ordered=TRUE))
+
+plotdata.other <- subset(plotdata, !(cancertype %in% c('MCC', 'UISO')))
+plotdata.MCC <- subset(plotdata, cancertype == 'MCC')
+plotdata.UISO <- subset(plotdata, cancertype == 'UISO')
+
+legend.labels <- paste(levels(classes.train.allcelllines), " (", table(classes.train.allcelllines), ")", sep="")
+legend.labels <- legend.labels[-c(6,10)]
+
+p <- ggplot()
+p <- p + geom_point(data=plotdata.other, aes(x=x, y=y, color=cancertype), alpha=0.5, size=5, show_guide=TRUE)
+
+p <- p + scale_colour_manual("Cancer type",
+                            values=c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#D94801", "#A65628", "#F781BF"),
+                            labels=legend.labels) 
+
+p <- p + geom_point(data=plotdata.MCC, aes(x=x, y=y), size=7, color="black")
+p <- p + geom_point(data=plotdata.MCC, aes(x=x, y=y), size=5, color="#F41A1C")
+p <- p + geom_text(data=plotdata.MCC, aes(x=x, y=y, label=rownames(plotdata.MCC)),
+                   hjust=1.0, vjust=-1.25, size=4)
+
+p <- p + geom_point(data=plotdata.UISO, aes(x=x, y=y), size=7, color="black")
+p <- p + geom_point(data=plotdata.UISO, aes(x=x, y=y), size=5, color="#6BAED6")
+p <- p + geom_text(data=plotdata.UISO, aes(x=x, y=y, label=rownames(plotdata.UISO)),
+                   hjust=-0.1, vjust=-0.75, size=4)
+
+p <- p + labs(x="Scaling component 1", y="Scaling component 2")
+p <- p + theme_bw() + theme(legend.position=c(0.1, 0.85),
+                            legend.title=element_text(size=14),
+                            legend.text=element_text(size=12),
+                            legend.background=element_rect(colour="black"),
+                            panel.background = element_rect(fill = "#FFFFFF"))
+print(p)
+
+# for publication
+ggsave("figure/mdsrfallcelllines.pdf", p, width=8, height=8)
+```
+
+PCA plot of CCLE, MCC, and UISO cel lines using PC1 and PC2
+--------------------
+``````{r pcaccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE, fig.width=12, fig.height=12}
+load("../cache/eset.batcheffect.nomod.RData")
+
+dataset <- eset.batcheffect.nomod
+pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
+pc <- pca$x
+
+plotdata <- data.frame(pc, sample=rownames(pc))
+rownames(plotdata) <- rownames(pc)
+plotdata <- cbind(plotdata[rownames(pc), ], pData(dataset)[rownames(pc), ])
+
+```
+
+```{r pcascatterccle, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+## Plot on PC1 and PC2
+
+plotdata$plot.type <- plotdata$cancer.type
+
+mcc.uisos <- grepl("UISO", rownames(plotdata))
+
+plotdata$plot.type <- as.character(plotdata$plot.type)
+plotdata$plot.type[mcc.uisos] <- "UISO"
+plotdata$plot.type <- factor(plotdata$plot.type)
+
+mcc.uisos <- grep("UISO", plotdata$labels, value=FALSE)
+
+plotdata.other <- subset(plotdata, !(plot.type %in% c('MCC', 'UISO')))
+plotdata.MCC <- subset(plotdata, plot.type == 'MCC')
+plotdata.UISO <- subset(plotdata, plot.type == 'UISO')
+
+legend.labels <- levels(plotdata$plot.type)
+legend.labels <- legend.labels[-c(6,10)]
+
+p <- ggplot()
+p <- p + geom_point(data=plotdata.other, aes(x=PC1, y=PC2, color=plot.type), alpha=0.5, size=5, show_guide=TRUE)
+
+p <- p + scale_colour_manual("Cancer type",
+                            values=c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#D94801", "#A65628", "#F781BF"),
+                            labels=legend.labels) 
+
+p <- p + geom_point(data=plotdata.MCC, aes(x=PC1, y=PC2), size=7, color="black")
+p <- p + geom_point(data=plotdata.MCC, aes(x=PC1, y=PC2), size=5, color="#F41A1C")
+p <- p + geom_text(data=plotdata.MCC, aes(x=PC1, y=PC2, label=rownames(plotdata.MCC)),
+                   hjust=1.0, vjust=-1.25, size=4)
+
+p <- p + geom_point(data=plotdata.UISO, aes(x=PC1, y=PC2), size=7, color="black")
+p <- p + geom_point(data=plotdata.UISO, aes(x=PC1, y=PC2), size=5, color="#6BAED6")
+p <- p + geom_text(data=plotdata.UISO, aes(x=PC1, y=PC2, label=rownames(plotdata.UISO)),
+                   hjust=-0.1, vjust=-0.75, size=4)
+
+p <- p + labs(x="Principal component 1", y="Principal component 2")
+p <- p + theme_bw() + theme(legend.position=c(0.85, 0.85),
+                            legend.title=element_text(size=14),
+                            legend.text=element_text(size=12),
+                            legend.background=element_rect(colour="black"),
+                            panel.background = element_rect(fill = "#FFFFFF"))
+print(p)
+
+ggsave("../graphs/pc1v2ccle.pdf", p, width=12, height=12)
+
+```
