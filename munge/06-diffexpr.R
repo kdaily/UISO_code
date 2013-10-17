@@ -30,25 +30,7 @@ testdec.list <- list(Tumor.UISO=rownames(subset(testdec.df, Tumor.UISO != 0)),
                      Tumor.Mkl1=rownames(subset(testdec.df, Tumor.Mkl1 != 0)),
                      Tumor.WaGa=rownames(subset(testdec.df, Tumor.WaGa != 0)))
 
-# At time of writing, Vennerable could not be installed for R 3.0.0
-# If you have R <= 2.15, install Vennerable and then the following will run
-
-# testdec.venn <- Venn(testdec.list)
-# pdf("graphs/proportionalvenn.cellvstumor.pdf", width=10, height=10)
-# plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
-# dev.off()
-
-# This is a workaround using venneuler
-# The plot is representative of the one in the publication
-setmember <- with(ldply(testdec.list, .fun=length), rep(.id, V1))
-element <- as.character(unlist(testdec.list))
-m <- data.frame(element, setmember)
-v <- venneuler(m)
-pdf("graphs/proportionalvenn.cellvstumor.pdf", width=10, height=10)
-plot(v)
-dev.off()
-
-# Regular venn diagram to see the counts of things in each set
-pdf("graphs/venn.cellvstumor.pdf")
-vennDiagram(testdec[, 1:3])
-dev.off()
+ProjectTemplate::cache('testdec')
+ProjectTemplate::cache('testdec.list')
+ProjectTemplate::cache('testdec.df')
+ProjectTemplate::cache('fit2.tumor.vs.cell')
