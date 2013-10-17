@@ -14,9 +14,9 @@ dataset.train <- dataset
 edata.train <- t(exprs(dataset.train))
 classes.train.allcelllines <- pData(dataset.train)$cancer.type
 
-## classes.train.allcelllines <- as.character(pData(dataset.train)$cancer.type)
-##classes.train.allcelllines[grepl("UISO", sampleNames(dataset.train))] <- "UISO"
-##classes.train.allcelllines <- factor(classes.train.allcelllines)
+classes.train.allcelllines <- as.character(pData(dataset.train)$cancer.type)
+classes.train.allcelllines[grepl("UISO", sampleNames(dataset.train))] <- "UISO"
+classes.train.allcelllines <- factor(classes.train.allcelllines)
 
 # set sample size to min sample size - 1
 sample.size <- rep(min(table(classes.train.allcelllines)), length(levels(classes.train.allcelllines))) - 1
