@@ -1,5 +1,6 @@
 # This does not run by default because it is very time consuming
 # We determined that batch correction was not needed (and could not be effectively tested since most factors are confounded with the known batch)
+# These are for testing purposes only!
 
 # # Test for a batch effect on processing date while not controlling for any other factor
 # exprs.batcheffect.noadj <- ComBat(dat=exprs(eset.original), batch=as.numeric(protocolData(data)$date), mod=NULL, numCovs=NULL, par.prior=par.prior)
