@@ -43,7 +43,7 @@ load.project()
 
 If you want to run things individually, then turn of munging, and run (source) each of the files in the munge directory sequentially.
 
-Creating all figures and tables
+Creating figures and tables
 -------------------------------
-
-Look in the `reports` directory for the files `AllFigures.Rmd` and `SuppMat.Rmd`. These files will recreate the figures in the manuscript and supplementary material, respectively.
+All of the figures in the main text and the supplementary materials can be reproduced from the R Markdown files in the `reports` directory (AllFigures.Rmd and SuppMat.Rmd, respectively).
+**All of the previous steps must be run prior to these.**
