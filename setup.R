@@ -1,7 +1,7 @@
 # Install required libraries
 required_libs <- c("ProjectTemplate", "reshape", "plyr", "ggplot2",
-                   "xtable", "grid", "affy", "annotate", "limma",
-                   "hgu133a2.db", "sva", "arrayQualityMetrics",
+                   "knitr", "xtable", "grid", "affy", "annotate", "limma",
+                   "hgu133a2.db", "hgu133plus2.db", "sva", "arrayQualityMetrics",
                    "affyQCReport", "snow", "cluster", "randomForest",
                    "sigclust", "genefilter", "GSA", "venneuler", "GEOquery")
 
