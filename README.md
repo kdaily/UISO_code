@@ -27,7 +27,7 @@ config/global.cfg
 Running and processing data
 -------
 
-First, set your working directory to the root of the respository (where the README.md is). Then, to run everything, change the lines in the global config file for munging and loading data (**WARNING: some steps require a lot of memory**).
+First, set your working directory to the root of the respository (where the README.md is). Then, to run everything, change the lines in the global config file for munging and loading data.
 
 ```
 data_loading: on
@@ -37,11 +37,19 @@ munging: on
 Then:
 
 ```{r}
-library(ProjectTemplate)
-load.project()
+source("run.R")
 ```
 
-If you want to run things individually, then turn of munging, and run (source) each of the files in the munge directory sequentially.
+Then, to run the CCLE-specific processing:
+
+
+```{r}
+source("runCCLE.R")
+```
+
+**WARNING: The CCLE data processing requires a lot ($>20$GB) of main memory to hold the expression data. The batch processing step can take $>15$ hours.**
+
+All steps can be run individually. Turn of munging (in `config/global.cfg`), and run (source) each of the files in the munge directory sequentially.
 
 Creating figures and tables
 -------------------------------
