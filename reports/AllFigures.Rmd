@@ -16,6 +16,7 @@ library(xtable)
 library(MASS)
 library(venneuler)
 library(limma) # For vennDiagram
+library(RColorBrewer)
 
 options(xtable.type="html")
 ```
@@ -44,20 +45,33 @@ Figure 1: UISO cell line samples are in a distinct group from MCC tumor samples 
 
 Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by PC’s one and two are 23% and 20%, respectively (PC3: 7%).
 
-```{r pcascatter, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 ## Plot on PC1 and PC2
 pc.data <- data.frame(pc, sample=rownames(pc))
 rownames(pc.data) <- rownames(pc)
 pc.data <- cbind(pc.data[rownames(pc), ], pData(dataset)[rownames(pc), ])
 
-p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(color=cancertype, 
-                                                         shape=factor(sample.type, 
-                                                                      labels=c("Cell line", "Tissue"))),
+pc.data$newclass <- ifelse(pc.data$class == "Tumor",
+                           as.character(pc.data$cancertype),
+                           as.character(pc.data$class))
+
+pc.data$newclass <- factor(pc.data$newclass, ordered=TRUE,
+                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC", "SCLC"),
+                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC Tumor", "SCLC tumor"))
+
+p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(shape=sample.type, color=newclass),
                                                      size=6)
-p <- p + xlim(-75, 200)
-p <- p + geom_text(aes(label=rownames(pc.data)), hjust=0.8, vjust=-0.75, size=4)
-p <- p + scale_colour_brewer("Cancer type", palette="Set1")
-p <- p + scale_shape_manual("Sample type", values=c(18,16))
+
+p <- p + xlim(-80, 140)
+
+type.colors <- c(brewer.pal(9, "Blues")[c(8, 3, 6)], 
+                 brewer.pal(9, "Greens")[c(5)], 
+                 brewer.pal(9, "Blues")[c(9)], 
+                 brewer.pal(9, "Reds")[c(8)]) 
+
+p <- p + scale_color_manual("Sample group", values=type.colors)
+p <- p + scale_shape_manual("Sample type", values=c(19,17), guide = 'none')
+p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=c(19,19,19,19,17,17))))
 
 xlabel <- substitute(paste("Principal component 1 (", sigma^2, " = ", s2, ")"),
                      list(s2=round(pca.var[1, "variance"], 2)))
@@ -65,17 +79,24 @@ ylabel <- substitute(paste("Principal component 2 (", sigma^2, " = ", s2, ")"),
                      list(s2=round(pca.var[2, "variance"], 2)))
 
 p <- p + labs(x=xlabel, y=ylabel)
-p <- p + theme_bw() + theme(legend.position=c(0.85, 0.85),
-                           legend.title=element_text(size=14),
-                           legend.text=element_text(size=12),
-                           legend.background=element_rect(colour="black"),
-                           axis.title.x=element_text(size=14), axis.title.y=element_text(size=14, angle=90),
-                           axis.text.x=element_text(size=12), axis.text.y=element_text(size=12),
-                           panel.background=element_rect())
+
+title.size <- 20
+text.size <- 18
+p <- p + theme_bw() + theme(legend.position=c(0.87, 0.87),
+                            #legend.position=c(0.15, 0.85),
+                            legend.title=element_text(size=title.size),
+                            legend.text=element_text(size=text.size),
+                            legend.background=element_rect(colour="black"),
+                            axis.title.x=element_text(size=title.size),
+                            axis.title.y=element_text(size=title.size, angle=90),
+                            # axis.text.x=element_text(size=text.size),
+                            # axis.text.y=element_text(size=text.size),
+                            axis.text.x=element_blank(), axis.text.y=element_blank(),
+                            panel.background=element_rect())
 
 print(p)
 
-ggsave("../graphs/pc1v2.pdf", p, width=10, height=10)
+# ggsave("../graphs/fig1.pdf", p, width=10, height=10)
 
 ```
 
@@ -83,22 +104,24 @@ ggsave("../graphs/pc1v2.pdf", p, width=10, height=10)
 Figure 2: UISO cell lines cluster separately from other MCC samples and cell lines.
 ------------------------
 
-Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus the Spearman correlation was used as a dissimilarity metric.
+Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus Spearman's rank correlation coefficient was used as a dissimilarity metric.
 
-```{r hierclust, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
+```{r fig2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
 dataset <- eset.original.filter
 d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
-plot(agnes(d, diss=TRUE, method='average'), which.plots=2, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
+plot(agnes(d, diss=TRUE, method='average'), which.plots=2, 
+     xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
 
-pdf("../graphs/hier.pdf", width=12, height=6)
-plot(agnes(d, diss=TRUE, method='average'), which.plots=2, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
-foo <- dev.off() # so device number is not printed.
+# pdf("../graphs/fig2.pdf", width=12, height=6)
+# plot(agnes(d, diss=TRUE, method='average'), which.plots=2, 
+#      xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
+# foo <- dev.off() # so device number is not printed.
 
 ```
 
 Figure 3: UISO cell line samples have significantly more differentially expressed genes when compared to MCC tumor samples.
 -----------------------
-```{r venn1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig3, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 load("../cache/testdec.RData")
 load("../cache/testdec.list.RData")
 load("../cache/testdec.df.RData")
@@ -121,7 +144,7 @@ v <- venneuler(m)
 plot(v)
 # dev.off()
 ```
-```{r venn2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig3_2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 # # Regular venn diagram to see the counts of things in each set
 # pdf("graphs/venn.cellvstumor.pdf")
 vennDiagram(testdec[, 1:3])
@@ -130,7 +153,7 @@ vennDiagram(testdec[, 1:3])
 
 Figure 4: UISO cell lines are in a distinct group from other MCC cell lines and neuroendocrine lines from the Cancer Cell Line Encyclopedia.
 --------------------
-```{r pcaccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE}
+```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE}
 load("../cache/eset.batcheffect.nomod.RData")
 
 dataset <- eset.batcheffect.nomod
@@ -145,7 +168,7 @@ pca.summary <- summary(pca)
 pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary$importance[2, ]))
 ```
 
-```{r pcascatterccle, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig4, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 ## Plot on PC1 and PC2
 
 plotdata$plot.type <- plotdata$cancer.type
@@ -166,7 +189,9 @@ legend.labels <- levels(plotdata$plot.type)
 legend.labels <- legend.labels[-c(6,10)]
 
 p <- ggplot()
-p <- p + geom_point(data=plotdata.other, aes(x=PC1, y=PC2, color=plot.type), alpha=0.5, size=5, show_guide=TRUE)
+
+p <- p + geom_point(data=plotdata.other, aes(x=PC1, y=PC2, color=plot.type, alpha=plot.type), 
+                    alpha=0.5, size=5, show_guide=TRUE)
 
 p <- p + scale_colour_manual("Cancer type",
                             values=c("#E41A1C", "#377EB8", "#4DAF4A",
@@ -174,19 +199,17 @@ p <- p + scale_colour_manual("Cancer type",
                                      "#A65628", "#F781BF"),
                             labels=legend.labels) 
 
-p <- p + geom_point(data=plotdata.MCC, aes(x=PC1, y=PC2), size=7, color="black")
 p <- p + geom_point(data=plotdata.MCC, aes(x=PC1, y=PC2),
-                    size=5, color="#F41A1C")
+                    size=6, color="black", fill="#F41A1C", shape=21)
 p <- p + geom_text(data=plotdata.MCC, aes(x=PC1, y=PC2, 
                                           label=rownames(plotdata.MCC)),
-                   hjust=1.0, vjust=-1.25, size=4)
+                   hjust=-0.2, vjust=0.2, size=5)
 
-p <- p + geom_point(data=plotdata.UISO, aes(x=PC1, y=PC2), size=7, color="black")
 p <- p + geom_point(data=plotdata.UISO, aes(x=PC1, y=PC2),
-                    size=5, color="#6BAED6")
+                    size=6, color="black", fill="#6BAED6", shape=21)
 p <- p + geom_text(data=plotdata.UISO, aes(x=PC1, y=PC2,
                                            label=rownames(plotdata.UISO)),
-                   hjust=-0.1, vjust=-0.75, size=4)
+                   hjust=1.2, vjust=0.2, size=5)
 
 
 xlabel <- substitute(paste("Principal component 1 (", sigma^2, " = ", s2, ")"),
@@ -195,27 +218,39 @@ ylabel <- substitute(paste("Principal component 2 (", sigma^2, " = ", s2, ")"),
                      list(s2=round(pca.var[2, "variance"], 2)))
 
 p <- p + labs(x=xlabel, y=ylabel)
-p <- p + theme_bw() + theme(legend.position=c(0.85, 0.85),
-                            legend.title=element_text(size=14),
-                            legend.text=element_text(size=12),
+
+title.size <- 20
+text.size <- 18
+
+p <- p + theme_bw() + theme(legend.position=c(0.875, 0.85),
+                            legend.title=element_text(size=title.size),
+                            legend.text=element_text(size=text.size),
                             legend.background=element_rect(colour="black"),
-                            panel.background = element_rect(fill = "#FFFFFF"))
+                            panel.background=element_rect(),
+                            axis.title.x=element_text(size=title.size),
+                            axis.title.y=element_text(size=title.size, angle=90),
+                            # axis.text.x=element_text(size=text.size),
+                            # axis.text.y=element_text(size=text.size),
+                            axis.text.x=element_blank(), axis.text.y=element_blank())
+
+p <- p + xlim(-140, 250)
+
 print(p)
 
-ggsave("../graphs/pc1v2ccle.pdf", p, width=12, height=12)
+# ggsave("../graphs/fig4.pdf", p, width=10, height=10)
 
 ```
 
 Table 1: A random forest classifier trained on MCC tumor samples does not classify UISO cell lines as MCC.
 --------------------------------------------------------------------------------
-A random forest classifier was trained using the filtered microarray probeset expression data for 23 MCC and 8 SCLC tumor samples. The classifier was then applied to the MCC cell lines, and the average class prediction was determined for each (over sample replicates). The class assignment (MCC and SCLC) probability is given as the fraction of trees in the random forest voting for each class. The values shown are the mean of six replicates for WaGa and Mkl-1, three replicates of UISO, and a single sample for MC01.
+A random forest classifier was trained using the filtered microarray probeset expression data for 23 MCC and 9 SCLC tumor samples. The classifier was then applied to the MCC cell lines, and the average class prediction was determined for each (over sample replicates). The class assignment (MCC and SCLC) probability is given as the fraction of trees in the random forest voting for each class. The values shown are the mean of six replicates for WaGa and Mkl-1, six replicates of UISO, and a single sample for MC01.
 ```{r loadrf, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
 load("../cache/rf.eset.RData")
 load("../cache/rf.predict.RData")
 load("../cache/rf.eset.unsupervised.RData")
 ```
 
-``` {r testerror, echo=FALSE, results='asis'}
+``` {r table1, echo=FALSE, results='asis'}
 rf.predict$class <- factor(rf.predict$class, levels=c("WaGa", "Mkl1", "MC01", "UISO"), 
                            labels=c("WaGa", "Mkl-1", "MC01", "UISO"))
 rf.predict.mean <- ddply(rf.predict, "class", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))

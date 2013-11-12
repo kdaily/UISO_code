@@ -15,7 +15,7 @@ library(cluster)
 library(xtable)
 library(MASS)
 
-options(xtable.type="html", xtable.caption.placement="top")
+options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
 ```
 
 Supplemental Figure 1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
@@ -27,7 +27,7 @@ load("../cache/eset.original.filter.RData")
 dataset <- eset.original.filter
 ```
 
-```{r corrboxplot, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=7}
+```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=7}
 
 dataset.original <- eset.original.filter
 
@@ -110,14 +110,19 @@ p <- p + theme_bw() + theme(axis.text=element_text(size=20),
 
 print(p)
 
-ggsave("../graphs/corrboxplot.pdf", p, width=16, height=8)
+ggsave("../graphs/figS1.pdf", p, width=16, height=8)
 
 # # to see the median values:
 # ddply(dataset.cor.melted, .(comparison), function(x) data.frame(median=median(x$value)))
 
 ```                        
 
-
+```{r mcvcorr, echo=FALSE, results='asis', include=FALSE}
+# Show the median correlation values by mcv status
+mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
+mcv.corr.cast <- cast(mcv.corr, comparison ~ MCPyV.status, value="median")
+xtable(mcv.corr.cast)
+```
 
 ```{r readdata, echo=FALSE}
 data <- list()
@@ -208,7 +213,7 @@ sh ./data/GSEA/run_GSEA.sh
 
 To identify pathways that are affected similarly, we performed three comparisons: UISO cell line vs. tumor samples, classic cell lines vs. tumor samples, and UISO cell line vs. classic cell lines. Green values are up-regulated and red values are down-regulated. Large bold values are statistically significant (FDR-adjusted p-value < `r fdr.thresh`).
 
-```{r table.all, echo=FALSE, results='asis'} 
+```{r TableS1, echo=FALSE, results='asis'} 
 tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
 ``` 
@@ -222,14 +227,14 @@ load("../cache/rf.eset.nouiso.RData")
 
 The mean prediction votes over six replicates of UISO cell line samples are given.
 
-```{r predictuiso, echo=FALSE, results='asis'}
+```{r TableS2, echo=FALSE, results='asis'}
 uisovotes <- as.data.frame(t(colMeans(rf.eset.nouiso.predict)))
 rownames(uisovotes) <- "UISO"
 print(xtable(uisovotes, digits=2))
 ```
 
 ## Supplemental Table 3: Held out (out-of-bag) WaGa and Mkl-1 cell line samples are classifed as MCC using random forest trained with using cell line microarray expression data.
-```{r avgvotestblnouisoccle, echo=FALSE, results='asis'}
+```{r TableS3, echo=FALSE, results='asis'}
 oobvotes <- data.frame(rf.eset.nouiso$votes,
                        cancertype=rf.eset.nouiso$y)
 
@@ -239,4 +244,28 @@ rownames(avgoobvotes) <- avgoobvotes[, 1]
 avgoobvotes <- avgoobvotes[, -1]
 colnames(avgoobvotes) <- levels(rf.eset.nouiso$y)
 print(xtable(avgoobvotes, digits=2))
+```
+
+## Supplemental Table 4: Antibodies used in immunohistochemical analysis. Legend: $^{*}$ paranuclear dot pattern; $^{**}$ focal staining with negative regions.
+
+```{r TableS4, results='asis', echo=FALSE}
+
+antibody.data <- read.csv("../data/antibodies.csv")
+colnames(antibody.data) <- c("Antibody", "Company", "Dilution", "Antigen retrievial", "WaGa", "UISO")
+antibody.xtbl <- xtable(antibody.data)
+
+print(antibody.xtbl, include.row.names=FALSE, sanitize.text.function=I)
+```
+
+## Supplemental Table 5: Short tandem repeat (STR) fingerprinting results for the WaGa, Mkl-1, and UISO cell lines using 16 markers from the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems).
+
+```{r TableS5, results='asis', echo=FALSE}
+
+sky.data <- read.table("../data/sky.tsv", sep="\t", header=TRUE)
+
+colnames(sky.data) <- c("Marker", "UISO (early passage)", "UISO (late passage)", "WaGa", "Mkl-1")
+
+sky.xtbl <- xtable(sky.data)
+
+print(sky.xtbl, sanitize.text.function=I)
 ```
