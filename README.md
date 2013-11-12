@@ -47,7 +47,7 @@ Then, to run the CCLE-specific processing:
 source("runCCLE.R")
 ```
 
-**WARNING: The CCLE data processing requires a lot ($>20$GB) of main memory to hold the expression data. The batch processing step can take $>15$ hours.**
+**WARNING: The CCLE data processing requires a lot (>20GB) of main memory to hold the expression data. The batch processing step can take >15 hours.**
 
 All steps can be run individually. Turn of munging (in `config/global.cfg`), and run (source) each of the files in the munge directory sequentially.
 
