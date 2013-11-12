@@ -30,4 +30,4 @@ load.project()
 If you want to run things individually, then turn of munging, and run each of the files in the munge directory sequentially.
 
 All of the figures in the main text and the supplementary materials can be reproduced from the R Markdown files in the `reports` directory (AllFigures.Rmd and SuppMat.Rmd, respectively).
-*All of the previous steps must be run prior to these.*
+**All of the previous steps must be run prior to these.**
