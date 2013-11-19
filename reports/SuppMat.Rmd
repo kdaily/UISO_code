@@ -246,12 +246,12 @@ colnames(avgoobvotes) <- levels(rf.eset.nouiso$y)
 print(xtable(avgoobvotes, digits=2))
 ```
 
-## Supplemental Table 4: Antibodies used in immunohistochemical analysis. Legend: $^{*}$ paranuclear dot pattern; $^{**}$ focal staining with negative regions.
+## Supplemental Table 4: Antibodies used in immunohistochemical analysis.
 
 ```{r TableS4, results='asis', echo=FALSE}
 
 antibody.data <- read.csv("../data/antibodies.csv")
-colnames(antibody.data) <- c("Antibody", "Company", "Dilution", "Antigen retrievial", "WaGa", "UISO")
+colnames(antibody.data) <- c("Antibody", "Company", "Dilution", "Antigen retrievial")
 antibody.xtbl <- xtable(antibody.data)
 
 print(antibody.xtbl, include.row.names=FALSE, sanitize.text.function=I)
