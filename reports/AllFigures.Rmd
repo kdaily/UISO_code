@@ -17,6 +17,7 @@ library(MASS)
 library(venneuler)
 library(limma) # For vennDiagram
 library(RColorBrewer)
+library(dendextend)
 
 options(xtable.type="html")
 ```
@@ -108,19 +109,33 @@ Hierarchical clustering of microarray expression data from MCC cell lines and MC
 
 ```{r fig2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
 dataset <- eset.original.filter
+
 d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
-plot(agnes(d, diss=TRUE, method='average'), which.plots=2, 
-     xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
+agnes.hc <- agnes(d, diss=TRUE, method='average')
+
+hc <- as.dendrogram(agnes.hc)
+hc <- hang.dendrogram(hc, hang = 0.1)
+
+virus.status <- pData(dataset)[labels(hc), ]$MCPyV.status
+
+hc.colors <- ifelse(virus.status == "Virus positive", 'red', 'blue')
+hc.colors[is.na(virus.status)] <- "black"
+labels_colors(hc) <- hc.colors
+
+plot(hc, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
 
 # pdf("../graphs/fig2.pdf", width=12, height=6)
-# plot(agnes(d, diss=TRUE, method='average'), which.plots=2, 
+# plot(hc, which.plots=2, 
 #      xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
-# foo <- dev.off() # so device number is not printed.
+# dev.off() # so device number is not printed.
 
 ```
 
-Figure 3: UISO cell line samples have significantly more differentially expressed genes when compared to MCC tumor samples.
+Figure 3: Compared to MCC tumors, UISO cells have more differentially expressed genes than classic MCC cell lines.
 -----------------------
+
+A Venn diagram showing the number of probesets commonly differentially expressed when comparing the MCC tumor samples to each MCC cell line. Only probesets with a log_2 fold change greater than 1 and a q-value less than 0.05 are counted (total: `r nrow(eset.original.filter)` probesets).
+
 ```{r fig3, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 load("../cache/testdec.RData")
 load("../cache/testdec.list.RData")
@@ -244,7 +259,7 @@ print(p)
 Table 1: A random forest classifier trained on MCC tumor samples does not classify UISO cell lines as MCC.
 --------------------------------------------------------------------------------
 A random forest classifier was trained using the filtered microarray probeset expression data for 23 MCC and 9 SCLC tumor samples. The classifier was then applied to the MCC cell lines, and the average class prediction was determined for each (over sample replicates). The class assignment (MCC and SCLC) probability is given as the fraction of trees in the random forest voting for each class. The values shown are the mean of six replicates for WaGa and Mkl-1, six replicates of UISO, and a single sample for MC01.
-```{r loadrf, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+```{r loadrf, echo=FALSE, error=FALSE, warning=FALSE, cache=TRUE, message=FALSE}
 load("../cache/rf.eset.RData")
 load("../cache/rf.predict.RData")
 load("../cache/rf.eset.unsupervised.RData")
@@ -254,6 +269,8 @@ load("../cache/rf.eset.unsupervised.RData")
 rf.predict$class <- factor(rf.predict$class, levels=c("WaGa", "Mkl1", "MC01", "UISO"), 
                            labels=c("WaGa", "Mkl-1", "MC01", "UISO"))
 rf.predict.mean <- ddply(rf.predict, "class", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
-rf.predict.mean.xtable <- xtable(rf.predict.mean)
+rownames(rf.predict.mean) <- rf.predict.mean$class
+rf.predict.mean <- rf.predict.mean[, -1]
+rf.predict.mean.xtable <- xtable(rf.predict.mean, align='rcc')
 print(rf.predict.mean.xtable)
 ```
