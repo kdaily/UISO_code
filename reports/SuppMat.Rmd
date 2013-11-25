@@ -1,4 +1,4 @@
-# Supplemental figures and tables
+# Supplemental Figures and Tables
 
 ```{r load, message=FALSE, warning=FALSE, echo=FALSE}
 # Here's how to compile this file in R, assuming your current directory is the repository root:
@@ -23,14 +23,14 @@ library(MASS)
 # }
 # 
 # options(rstudio.markdownToHTML=md2html)
-
+# 
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
 
 ```
 
 ## Supplemental Figure 1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
 
-Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50\% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
+Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
 ```{r loadexpr, echo=FALSE}
 load("../cache/eset.original.filter.RData")
@@ -164,17 +164,17 @@ merged.data$.id <- gsub("\\.pos|\\.neg", "", merged.data$.id)
 merged.data$FDR.q.val <- round(merged.data$FDR.q.val, 6)
 
 
-merged.data$FDR.q.val.formatted <- format.pval(merged.data$FDR.q.val, digits=4)
+merged.data$FDR.q.val.formatted <- format.pval(merged.data$FDR.q.val, digits=1)
 
 merged.data$value <- ifelse(merged.data$direction == 1,
                             gsub("(.*)",
                                  # '<div style="color: red;">\\1</div>',
                                  '<div class="red"><span>\\1</span></div>',
-                                 merged.data$FDR.q.val),
+                                 merged.data$FDR.q.val.formatted),
                             gsub("(.*)", 
                                  # '<div style="color: green;">\\1</div>',
                                  '<div class="green"><span>\\1</span></div>',
-                                 merged.data$FDR.q.val))
+                                 merged.data$FDR.q.val.formatted))
 
 fdr.thresh <- 0.05
 merged.data$value <- ifelse(merged.data$FDR.q.val <= fdr.thresh,
@@ -227,7 +227,7 @@ sh ./data/GSEA/run_GSEA.sh
 
 To identify pathways that are affected similarly, we performed three comparisons: UISO cell line vs. tumor samples, classic cell lines vs. tumor samples, and UISO cell line vs. classic cell lines. Green values are up-regulated and red values are down-regulated. Large bold values are statistically significant (FDR-adjusted p-value < `r fdr.thresh`).
 
-```{r TableS1, echo=FALSE, results='asis'} 
+```{r TableS1, echo=FALSE, results='asis'}
 tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
 ``` 
@@ -236,30 +236,55 @@ print(tmp, type='html', sanitize.text.function=I)
 
 ```{r loadccle, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
 load("../cache/rf.eset.nouiso.predict.RData")
+load("../cache/rf.eset.nouiso.predict.train.RData")
 load("../cache/rf.eset.nouiso.RData")
 ```
 
-## Supplemental Table 2: UISO cell line samples are not not classified as MCC with a random forest classifier trained using cell line microarray expression data.
+## Supplemental Table 2: UISO cell line samples are not not classified as MCC with a random forest classifier trained using cell line microarray expression data. The mean prediction votes of UISO cell line samples and Mkl-1 and WaGa samples (labeled MCC) are given.
 
-The mean prediction votes over six replicates of UISO cell line samples are given.
+*The MCC samples are used for training so bias may exist. See Supplementary Table 3 for unbiased prediction estimates of Mkl-1 and WaGa samples.
 
 ```{r TableS2, echo=FALSE, results='asis'}
-uisovotes <- as.data.frame(t(colMeans(rf.eset.nouiso.predict)))
-rownames(uisovotes) <- "UISO"
-print(xtable(uisovotes, digits=2))
+rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype == "MCC")
+
+predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)
+avgvotes <- ddply(predictions.combined, .variables="cancertype", colwise(mean, is.numeric))
+
+rownames(avgvotes) <- c("MCC*", "UISO")
+avgvotes <- avgvotes[, -1]
+
+print(xtable(avgvotes, digits=3, align='rccccccccc'))
 ```
 
-## Supplemental Table 3: Held out (out-of-bag) WaGa and Mkl-1 cell line samples are classifed as MCC using random forest trained with using cell line microarray expression data.
-```{r TableS3, echo=FALSE, results='asis'}
+## Supplemental Table 3: WaGa and Mkl-1 cell line samples (labeled MCC) held out from classifier training (out-of-bag) are classifed as MCC using random forest trained with cell line microarray expression data.
+
+```{r TableS3, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 oobvotes <- data.frame(rf.eset.nouiso$votes,
                        cancertype=rf.eset.nouiso$y)
 
+# oobvotes <- subset(oobvotes, cancertype == "MCC")
+
 avgoobvotes <- ddply(oobvotes, .variables="cancertype", colwise(mean, is.numeric))
 
-rownames(avgoobvotes) <- avgoobvotes[, 1]
-avgoobvotes <- avgoobvotes[, -1]
-colnames(avgoobvotes) <- levels(rf.eset.nouiso$y)
-print(xtable(avgoobvotes, digits=2))
+avgoobvotes.melted <- melt(avgoobvotes)
+
+avgoobvotes.melted$cancertype <- gsub(" ", ".", avgoobvotes.melted$cancertype)
+
+avgoobvotes.melted$value <- signif(avgoobvotes.melted$value, 2)
+avgoobvotes.melted$value <- with(avgoobvotes.melted, ifelse(as.character(cancertype) == as.character(variable), 
+                                                            gsub("(.*)",
+                                                                 '<div style="font-weight:bold">\\1</div>',
+                                                                 value),
+                                                            value))
+
+avgoobvotes.formatted <- cast(avgoobvotes.melted, formula=cancertype ~ variable, value="value")
+avgoobvotes.formatted <- avgoobvotes.formatted[, -1]
+colnames(avgoobvotes.formatted) <- gsub("\\.", " ", colnames(avgoobvotes.formatted))
+
+rownames(avgoobvotes.formatted) <- colnames(avgoobvotes.formatted)
+
+
+print(xtable(avgoobvotes.formatted, align='rccccccccc'), sanitize.text.function=I)
 ```
 
 ## Supplemental Table 4: Antibodies used in immunohistochemical analysis.
