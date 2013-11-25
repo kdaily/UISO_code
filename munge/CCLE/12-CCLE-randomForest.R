@@ -29,7 +29,12 @@ rf.eset.nouiso <- randomForest(x=edata.train, y=classes.train.allcelllines, ntre
                                      do.trace=100)
 
 rf.eset.nouiso.predict <- as.data.frame(predict(rf.eset.nouiso, edata.test, type="prob"))
+rf.eset.nouiso.predict$cancertype <- "UISO"
+
+rf.eset.nouiso.predict.train <- as.data.frame(predict(rf.eset.nouiso, edata.train, type="prob"))
+rf.eset.nouiso.predict.train$cancertype <- classes.train.allcelllines
 
 ProjectTemplate::cache('rf.eset.nouiso')
 ProjectTemplate::cache('rf.eset.nouiso.predict')
+ProjectTemplate::cache('rf.eset.nouiso.predict.train')
 ProjectTemplate::cache('classes.train.nouiso')
