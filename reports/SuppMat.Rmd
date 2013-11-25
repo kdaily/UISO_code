@@ -1,5 +1,4 @@
-Supplemental figures and tables
-=================================
+# Supplemental figures and tables
 
 ```{r load, message=FALSE, warning=FALSE, echo=FALSE}
 # Here's how to compile this file in R, assuming your current directory is the repository root:
@@ -15,12 +14,23 @@ library(cluster)
 library(xtable)
 library(MASS)
 
+# Need this for pretty colors in tables
+# Run this before knitting!
+
+# md2html <- function(inputFile, outputFile) {
+#   require(markdown)
+#   markdownToHTML(inputFile, outputFile, stylesheet='style.css')
+# }
+# 
+# options(rstudio.markdownToHTML=md2html)
+
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
+
 ```
 
-Supplemental Figure 1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
--------------------
-Boxplots of pairwise Spearman correlations ($\rho$) of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50\% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
+## Supplemental Figure 1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
+
+Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50\% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
 ```{r loadexpr, echo=FALSE}
 load("../cache/eset.original.filter.RData")
@@ -117,6 +127,8 @@ ggsave("../graphs/figS1.pdf", p, width=16, height=8)
 
 ```                        
 
+<div style="page-break-after:always"></div>
+
 ```{r mcvcorr, echo=FALSE, results='asis', include=FALSE}
 # Show the median correlation values by mcv status
 mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
@@ -156,10 +168,12 @@ merged.data$FDR.q.val.formatted <- format.pval(merged.data$FDR.q.val, digits=4)
 
 merged.data$value <- ifelse(merged.data$direction == 1,
                             gsub("(.*)",
-                                 '<div style="color: red;">\\1</div>',
+                                 # '<div style="color: red;">\\1</div>',
+                                 '<div class="red"><span>\\1</span></div>',
                                  merged.data$FDR.q.val),
                             gsub("(.*)", 
-                                 '<div style="color: green;">\\1</div>',
+                                 # '<div style="color: green;">\\1</div>',
+                                 '<div class="green"><span>\\1</span></div>',
                                  merged.data$FDR.q.val))
 
 fdr.thresh <- 0.05
@@ -218,6 +232,8 @@ tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
 ``` 
 
+<div style="page-break-after:always"></div>
+
 ```{r loadccle, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
 load("../cache/rf.eset.nouiso.predict.RData")
 load("../cache/rf.eset.nouiso.RData")
@@ -254,8 +270,10 @@ antibody.data <- read.csv("../data/antibodies.csv")
 colnames(antibody.data) <- c("Antibody", "Company", "Dilution", "Antigen retrievial")
 antibody.xtbl <- xtable(antibody.data)
 
-print(antibody.xtbl, include.row.names=FALSE, sanitize.text.function=I)
+print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 ```
+
+<div style="page-break-after:always"></div>
 
 ## Supplemental Table 5: Short tandem repeat (STR) fingerprinting results for the WaGa, Mkl-1, and UISO cell lines using 16 markers from the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems).
 
@@ -265,7 +283,7 @@ sky.data <- read.table("../data/sky.tsv", sep="\t", header=TRUE)
 
 colnames(sky.data) <- c("Marker", "UISO (early passage)", "UISO (late passage)", "WaGa", "Mkl-1")
 
-sky.xtbl <- xtable(sky.data)
+sky.xtbl <- xtable(sky.data, align=c('r', 'r', 'c', 'c', 'c', 'c'))
 
-print(sky.xtbl, sanitize.text.function=I)
+print(sky.xtbl, sanitize.text.function=I, include.rownames=FALSE)
 ```
