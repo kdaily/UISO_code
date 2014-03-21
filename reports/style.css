@@ -52,7 +52,7 @@ code.r, code.cpp {
    background-color: #F8F8F8;
 }
 
-table {
+table, td, th {
   border: 1px solid #333;
   border-collapse: collapse;
 }
