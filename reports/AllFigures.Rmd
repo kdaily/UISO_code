@@ -41,12 +41,47 @@ pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary
 
 ```
 
-Figure 1: UISO cell line samples are in a distinct group from MCC tumor samples and classic MCC cell lines.
+
+Figure 1A: UISO cell lines cluster separately from other MCC samples and cell lines.
+------------------------
+
+Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus Spearman's rank correlation coefficient was used as a dissimilarity metric.
+
+```{r fig1a, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
+dataset <- eset.original.filter
+
+d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
+agnes.hc <- agnes(d, diss=TRUE, method='average')
+
+hc <- as.dendrogram(agnes.hc)
+hc <- hang.dendrogram(hc, hang = 0.1)
+
+virus.status <- pData(dataset)[labels(hc), ]$MCPyV.status
+
+hc.colors <- ifelse(virus.status == "Virus positive", 'red', 'blue')
+hc.colors[is.na(virus.status)] <- "black"
+labels_colors(hc) <- hc.colors
+
+plot(hc, xlab="Dissimilarity = 1 - Correlation", main="")
+text(x=5.4, y=c(0.3, 0.27, 0.24),
+     labels=c("MCV-positive", "MCV-negative", "Not tested"),
+     col=c("red", "blue", "black"), cex=1.25)
+
+pdf("../graphs/fig2.pdf", width=12, height=6)
+plot(hc, xlab="Dissimilarity = 1 - Correlation", main="")
+text(x=5.4, y=c(0.3, 0.27, 0.24),
+     labels=c("MCV-positive", "MCV-negative", "Not tested"),
+     col=c("red", "blue", "black"), cex=1.25)
+dev.off() # so device number is not printed.
+
+```
+
+Figure 1B: UISO cell line samples are in a distinct group from MCC tumor samples and classic MCC cell lines.
 --------------------
 
 Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by PC’s one and two are 23% and 20%, respectively (PC3: 7%).
 
-```{r fig1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig1b, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 ## Plot on PC1 and PC2
 pc.data <- data.frame(pc, sample=rownames(pc))
 rownames(pc.data) <- rownames(pc)
@@ -101,48 +136,21 @@ print(p)
 
 ```
 
-
-Figure 2: UISO cell lines cluster separately from other MCC samples and cell lines.
-------------------------
-
-Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus Spearman's rank correlation coefficient was used as a dissimilarity metric.
-
-```{r fig2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
-dataset <- eset.original.filter
-
-d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
-agnes.hc <- agnes(d, diss=TRUE, method='average')
-
-hc <- as.dendrogram(agnes.hc)
-hc <- hang.dendrogram(hc, hang = 0.1)
-
-virus.status <- pData(dataset)[labels(hc), ]$MCPyV.status
-
-hc.colors <- ifelse(virus.status == "Virus positive", 'red', 'blue')
-hc.colors[is.na(virus.status)] <- "black"
-labels_colors(hc) <- hc.colors
-
-plot(hc, xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
-
-# pdf("../graphs/fig2.pdf", width=12, height=6)
-# plot(hc, which.plots=2, 
-#      xlab="Dissimilarity = 1 - Correlation", main="Average Linkage")
-# dev.off() # so device number is not printed.
-
-```
-
-Figure 3: Compared to MCC tumors, UISO cells have more differentially expressed genes than classic MCC cell lines.
+Figure 2: Compared to MCC tumors, UISO cells have more differentially expressed genes than classic MCC cell lines.
 -----------------------
 
 A Venn diagram showing the number of probesets commonly differentially expressed when comparing the MCC tumor samples to each MCC cell line. Only probesets with a log_2 fold change greater than 1 and a q-value less than 0.05 are counted (total: `r nrow(eset.original.filter)` probesets).
 
-```{r fig3, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 load("../cache/testdec.RData")
 load("../cache/testdec.list.RData")
 load("../cache/testdec.df.RData")
 
-# At time of writing, Vennerable could not be installed for R 3.0.0
+# At time of writing, Vennerable could not be installed for R 3.0.0 (easily)
 # If you have R <= 2.15, install Vennerable and then the following will run
+# Otherwise, try using the protocol here: http://matticklab.com/index.php?title=Weighted_Venn_diagrams_in_R
+# Install from R-forge, then install needed libraries
+# If that fails, then a similar plot can be made with venneuler
 
 # testdec.venn <- Venn(testdec.list)
 # pdf("graphs/proportionalvenn.cellvstumor.pdf", width=10, height=10)
@@ -159,14 +167,14 @@ v <- venneuler(m)
 plot(v)
 # dev.off()
 ```
-```{r fig3_2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig2_2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 # # Regular venn diagram to see the counts of things in each set
 # pdf("graphs/venn.cellvstumor.pdf")
 vennDiagram(testdec[, 1:3])
 # dev.off()
 ```
 
-Figure 4: UISO cell lines are in a distinct group from other MCC cell lines and neuroendocrine lines from the Cancer Cell Line Encyclopedia.
+Figure 3: UISO cell lines are in a distinct group from other MCC cell lines and neuroendocrine lines from the Cancer Cell Line Encyclopedia.
 --------------------
 ```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE}
 load("../cache/eset.batcheffect.nomod.RData")
@@ -183,7 +191,7 @@ pca.summary <- summary(pca)
 pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary$importance[2, ]))
 ```
 
-```{r fig4, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
+```{r fig3, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 ## Plot on PC1 and PC2
 
 plotdata$plot.type <- plotdata$cancer.type

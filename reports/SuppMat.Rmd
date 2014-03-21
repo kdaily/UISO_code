@@ -1,6 +1,16 @@
-# Supplemental Figures and Tables
+## 
 
 ```{r load, message=FALSE, warning=FALSE, echo=FALSE}
+# Need this for pretty colors in tables
+# Run this before knitting!
+
+# md2html <- function(inputFile, outputFile) {
+#   require(markdown)
+#   markdownToHTML(inputFile, outputFile, stylesheet='style.css')
+# }
+# 
+# options(rstudio.markdownToHTML=md2html)
+ 
 # Here's how to compile this file in R, assuming your current directory is the repository root:
 
 # library(knitr)
@@ -13,22 +23,12 @@ library(plyr)
 library(cluster)
 library(xtable)
 library(MASS)
-
-# Need this for pretty colors in tables
-# Run this before knitting!
-
-# md2html <- function(inputFile, outputFile) {
-#   require(markdown)
-#   markdownToHTML(inputFile, outputFile, stylesheet='style.css')
-# }
-# 
-# options(rstudio.markdownToHTML=md2html)
-# 
+ 
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
 
 ```
 
-## Supplemental Figure 1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
+### Figure S1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
 
 Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
@@ -103,7 +103,7 @@ dataset.cor.melted <- transform(dataset.cor.melted,
 # plot
 p <- ggplot(dataset.cor.melted, aes(x=comparison, y=value))
 p <- p + geom_boxplot(notch=FALSE, outlier.size=0)
-p <- p + geom_jitter(aes(color=MCPyV.status, shape=MCPyV.status), position=position_jitter(width=0.1), alpha=0.6)
+p <- p + geom_jitter(aes(color=MCPyV.status, shape=MCPyV.status), position=position_jitter(width=0.1), alpha=0.8)
 p <- p + facet_grid(. ~ tumorORnot, scales="free_x")
 p <- p + labs(x="", y=expression(Correlation~(rho)))
 p <- p + scale_color_brewer(palette='Set1')
@@ -122,21 +122,23 @@ print(p)
 
 ggsave("../graphs/figS1.pdf", p, width=16, height=8)
 
-# # to see the median values:
-# ddply(dataset.cor.melted, .(comparison), function(x) data.frame(median=median(x$value)))
-
-```                        
+```
 
 <div style="page-break-after:always"></div>
 
-```{r mcvcorr, echo=FALSE, results='asis', include=FALSE}
+### Table S1: Median correlation values of cell line-tumor comparisons between Merkel cell polyomavirus positive and negative tumor samples.
+
+```{r TableS1, echo=FALSE, results='asis', include=TRUE}
 # Show the median correlation values by mcv status
 mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
 mcv.corr.cast <- cast(mcv.corr, comparison ~ MCPyV.status, value="median")
-xtable(mcv.corr.cast)
+xtable(mcv.corr.cast[1:3, ])
 ```
 
 ```{r readdata, echo=FALSE}
+# See the following script to reproduce all provided files (assumes that your current directory is the repository root):
+# sh ./data/GSEA/run_GSEA.sh
+
 data <- list()
 data[['tumor.classic.pos']] <- read.table("../data/GSEA/tumor_vs_classic_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
 data[['tumor.classic.pos']]$direction <- 1
@@ -217,20 +219,15 @@ colnames(merged.data.wide) <- c( "UISO vs. Tumor", "Classic vs. Tumor",
 
 ```
 
-## Supplemental Table 1: Gene Set Enrichment Analysis (GSEA) on `r nrow(merged.data.wide)` KEGG pathways using differentially expressed genes in the cell lines
-
-See the following script to reproduce all provided files (assumes that your current directory is the repository root):
-
-```
-sh ./data/GSEA/run_GSEA.sh
-```
+### Table S2: Gene Set Enrichment Analysis (GSEA) on `r nrow(merged.data.wide)` KEGG pathways using differentially expressed genes in the cell lines
 
 To identify pathways that are affected similarly, we performed three comparisons: UISO cell line vs. tumor samples, classic cell lines vs. tumor samples, and UISO cell line vs. classic cell lines. Green values are up-regulated and red values are down-regulated. Large bold values are statistically significant (FDR-adjusted p-value < `r fdr.thresh`).
 
-```{r TableS1, echo=FALSE, results='asis'}
+```{r TableS2, echo=FALSE, results='asis'}
 tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
 ``` 
+
 
 <div style="page-break-after:always"></div>
 
@@ -240,11 +237,13 @@ load("../cache/rf.eset.nouiso.predict.train.RData")
 load("../cache/rf.eset.nouiso.RData")
 ```
 
-## Supplemental Table 2: UISO cell line samples are not not classified as MCC with a random forest classifier trained using cell line microarray expression data. The mean prediction votes of UISO cell line samples and Mkl-1 and WaGa samples (labeled MCC) are given.
+### Table S3: UISO cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
 
-*The MCC samples are used for training so bias may exist. See Supplementary Table 3 for unbiased prediction estimates of Mkl-1 and WaGa samples.
+The mean prediction votes of UISO cell line samples and Mkl-1 and WaGa samples (labeled MCC) are given.
+^* The MCC samples are used for training so bias may exist.
+See Table S4 for unbiased prediction estimates of Mkl-1 and WaGa samples.
 
-```{r TableS2, echo=FALSE, results='asis'}
+```{r TableS3, echo=FALSE, results='asis'}
 rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype == "MCC")
 
 predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)
@@ -256,9 +255,12 @@ avgvotes <- avgvotes[, -1]
 print(xtable(avgvotes, digits=3, align='rccccccccc'))
 ```
 
-## Supplemental Table 3: WaGa and Mkl-1 cell line samples (labeled MCC) held out from classifier training (out-of-bag) are classifed as MCC using random forest trained with cell line microarray expression data.
 
-```{r TableS3, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+<div style="page-break-after:always"></div>
+
+### Table S4: WaGa and Mkl-1 cell line samples (labeled MCC) held out from classifier training (out-of-bag) are classifed as MCC using random forest trained with cell line microarray expression data.
+
+```{r TableS4, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 oobvotes <- data.frame(rf.eset.nouiso$votes,
                        cancertype=rf.eset.nouiso$y)
 
@@ -287,9 +289,11 @@ rownames(avgoobvotes.formatted) <- colnames(avgoobvotes.formatted)
 print(xtable(avgoobvotes.formatted, align='rccccccccc'), sanitize.text.function=I)
 ```
 
-## Supplemental Table 4: Antibodies used in immunohistochemical analysis.
+<div style="page-break-after:always"></div>
 
-```{r TableS4, results='asis', echo=FALSE}
+### Table S5: Antibodies used in immunohistochemical analysis.
+
+```{r TableS5, results='asis', echo=FALSE}
 
 antibody.data <- read.csv("../data/antibodies.csv")
 colnames(antibody.data) <- c("Antibody", "Company", "Dilution", "Antigen retrievial")
@@ -300,9 +304,9 @@ print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 
 <div style="page-break-after:always"></div>
 
-## Supplemental Table 5: Short tandem repeat (STR) fingerprinting results for the WaGa, Mkl-1, and UISO cell lines using 16 markers from the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems).
+### Table S6: Short tandem repeat (STR) fingerprinting results for the WaGa, Mkl-1, and UISO cell lines using 16 markers from the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems).
 
-```{r TableS5, results='asis', echo=FALSE}
+```{r TableS6, results='asis', echo=FALSE}
 
 sky.data <- read.table("../data/sky.tsv", sep="\t", header=TRUE)
 
