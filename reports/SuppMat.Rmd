@@ -1,16 +1,6 @@
 ## 
 
 ```{r load, message=FALSE, warning=FALSE, echo=FALSE}
-# Need this for pretty colors in tables
-# Run this before knitting!
-
-# md2html <- function(inputFile, outputFile) {
-#   require(markdown)
-#   markdownToHTML(inputFile, outputFile, stylesheet='style.css')
-# }
-# 
-# options(rstudio.markdownToHTML=md2html)
- 
 # Here's how to compile this file in R, assuming your current directory is the repository root:
 
 # library(knitr)
