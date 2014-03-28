@@ -20,3 +20,7 @@ require(devtools)
 install_github('dendextend', 'talgalili')
 require(Rcpp)
 install_github('dendextendRcpp', 'talgalili')
+
+# rmarkdown for compiling reports (figures and supplementals) if not using
+# RStudio
+install_github("rstudio/rmarkdown")
