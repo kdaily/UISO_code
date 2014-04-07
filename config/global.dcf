@@ -1,5 +1,5 @@
 data_loading: on
-cache_loading: on
+cache_loading: off
 recursive_loading: off
 munging: off
 logging: on
