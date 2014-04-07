@@ -4,7 +4,7 @@ dataset <- eset.original.rma.u133plus2
 
 ## Don't use model for cancer type
 mod <- NULL
-par.prior <- FALSE
+par.prior <- TRUE
 
 exprs.batcheffect.nomod <- ComBat(dat=exprs(dataset), batch=pData(dataset)$batch, mod=mod, numCovs=NULL, par.prior=par.prior, prior.plots=TRUE)
 ProjectTemplate::cache("exprs.batcheffect.nomod")
