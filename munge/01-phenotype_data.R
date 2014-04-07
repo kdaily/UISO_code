@@ -4,7 +4,7 @@ clinical.data <- transform(clinical.data,
                            MCPyV.status=factor(MCPyV.status, levels=c("negative","positive"), 
                                                labels=c("Virus negative", "Virus positive"),
                                                ordered=TRUE),
-                           classic=factor(classic, levels=c("UISOCellLine", "ClassicCellLine", "Tumor"), 
+                           classic=factor(classic, levels=c("VariantCellLine", "ClassicCellLine", "Tumor"), 
                                                ordered=TRUE),
                            batch=factor(batch))
 
