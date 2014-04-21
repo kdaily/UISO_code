@@ -67,7 +67,7 @@ text(x=5.4, y=c(0.3, 0.27, 0.24),
      labels=c("MCV-positive", "MCV-negative", "Not tested"),
      col=c("red", "blue", "black"), cex=1.25)
 
-pdf("../graphs/fig2.pdf", width=12, height=6)
+pdf("../graphs/fig1a.pdf", width=12, height=6)
 plot(hc, xlab="Dissimilarity = 1 - Correlation", main="")
 text(x=5.4, y=c(0.3, 0.27, 0.24),
      labels=c("MCV-positive", "MCV-negative", "Not tested"),
@@ -132,7 +132,7 @@ p <- p + theme_bw() + theme(legend.position=c(0.87, 0.87),
 
 print(p)
 
-# ggsave("../graphs/fig1.pdf", p, width=10, height=10)
+# ggsave("../graphs/fig1b.pdf", p, width=10, height=10)
 
 ```
 
@@ -163,13 +163,13 @@ setmember <- with(ldply(testdec.list, .fun=length), rep(.id, V1))
 element <- as.character(unlist(testdec.list))
 m <- data.frame(element, setmember)
 v <- venneuler(m)
-# pdf("graphs/proportionalvenn.cellvstumor.pdf", width=10, height=10)
+# pdf("graphs/fig2.pdf", width=10, height=10)
 plot(v)
 # dev.off()
 ```
 ```{r fig2_2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 # # Regular venn diagram to see the counts of things in each set
-# pdf("graphs/venn.cellvstumor.pdf")
+# pdf("graphs/fig2.pdf")
 vennDiagram(testdec[, 1:3])
 # dev.off()
 ```
@@ -260,7 +260,7 @@ p <- p + xlim(-140, 250)
 
 print(p)
 
-# ggsave("../graphs/fig4.pdf", p, width=10, height=10)
+# ggsave("../graphs/fig3.pdf", p, width=10, height=10)
 
 ```
 
