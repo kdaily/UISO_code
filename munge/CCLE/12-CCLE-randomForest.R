@@ -8,14 +8,14 @@ dataset.filter <- nsFilter(tmp, remove.dupEntrez=FALSE, require.entrez=FALSE, va
 print(dataset.filter$filter.log$numLowVar)
 dataset <- dataset.filter$eset
 
-## Use all data except UISO
-mcc.uisos <- grepl("UISO", sampleNames(dataset))
+## Use all data except Variants
+mcc.variants <- grepl("UISO", sampleNames(dataset)) | grepl("MCC", sampleNames(dataset))
 
-dataset.train <- dataset[, !mcc.uisos]
+dataset.train <- dataset[, !mcc.variants]
 edata.train <- t(exprs(dataset.train))
 classes.train.allcelllines <- factor(as.character(pData(dataset.train)$cancer.type))
 
-dataset.test <- dataset[, mcc.uisos]
+dataset.test <- dataset[, mcc.variants]
 edata.test <- t(exprs(dataset.test))
 
 
@@ -29,7 +29,7 @@ rf.eset.nouiso <- randomForest(x=edata.train, y=classes.train.allcelllines, ntre
                                      do.trace=100)
 
 rf.eset.nouiso.predict <- as.data.frame(predict(rf.eset.nouiso, edata.test, type="prob"))
-rf.eset.nouiso.predict$cancertype <- "UISO"
+rf.eset.nouiso.predict$cancertype <- "MCCVariant"
 
 rf.eset.nouiso.predict.train <- as.data.frame(predict(rf.eset.nouiso, edata.train, type="prob"))
 rf.eset.nouiso.predict.train$cancertype <- classes.train.allcelllines
@@ -37,4 +37,3 @@ rf.eset.nouiso.predict.train$cancertype <- classes.train.allcelllines
 ProjectTemplate::cache('rf.eset.nouiso')
 ProjectTemplate::cache('rf.eset.nouiso.predict')
 ProjectTemplate::cache('rf.eset.nouiso.predict.train')
-ProjectTemplate::cache('classes.train.nouiso')
