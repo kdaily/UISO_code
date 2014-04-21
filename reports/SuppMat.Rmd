@@ -36,7 +36,7 @@ load("../cache/eset.original.filter.RData")
 dataset <- eset.original.filter
 ```
 
-```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=5}
+```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
 
 dataset.original <- eset.original.filter
 
@@ -236,7 +236,7 @@ load("../cache/rf.eset.nouiso.predict.train.RData")
 load("../cache/rf.eset.nouiso.RData")
 ```
 
-### Table S3: UISO cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
+### Table S3: Variant MCC cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
 
 The mean prediction votes of UISO cell line samples and Mkl-1 and WaGa samples (labeled MCC) are given.
 ^* The MCC samples are used for training so bias may exist.
@@ -245,13 +245,15 @@ See Table S4 for unbiased prediction estimates of Mkl-1 and WaGa samples.
 ```{r TableS3, echo=FALSE, results='asis'}
 rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype == "MCC")
 
-predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)
-avgvotes <- ddply(predictions.combined, .variables="cancertype", colwise(mean, is.numeric))
+predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)[, -ncol(rf.eset.nouiso.predict.train)]
 
-rownames(avgvotes) <- c("MCC*", "UISO")
-avgvotes <- avgvotes[, -1]
-
-print(xtable(avgvotes, digits=3, align='rccccccccc'))
+print(xtable(predictions.combined, digits=3, align='rccccccccc'))
+# avgvotes <- ddply(predictions.combined, .variables="cancertype", colwise(mean, is.numeric))
+# 
+# rownames(avgvotes) <- c("MCC*", "MCC Variant")
+# avgvotes <- avgvotes[, -1]
+# 
+# print(xtable(avgvotes, digits=3, align='rccccccccc'))
 ```
 
 
