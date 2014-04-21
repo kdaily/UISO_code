@@ -93,15 +93,15 @@ pc.data$newclass <- ifelse(pc.data$class == "Tumor",
 
 pc.data$newclass <- factor(pc.data$newclass, ordered=TRUE,
                            levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC", "SCLC"),
-                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC Tumor", "SCLC tumor"))
+                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC Tumor", "SCLC Tumor"))
 
 p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(shape=sample.type, color=newclass),
                                                      size=6)
 
 p <- p + xlim(-80, 140)
 
-type.colors <- c(brewer.pal(9, "Blues")[c(8, 3, 6)], 
-                 brewer.pal(9, "Greens")[c(5)], 
+type.colors <- c(brewer.pal(9, "Blues")[c(8, 4, 6)], 
+                 brewer.pal(9, "Greens")[c(7)], 
                  brewer.pal(9, "Blues")[c(9)], 
                  brewer.pal(9, "Reds")[c(8)]) 
 
@@ -270,7 +270,7 @@ A random forest classifier was trained using the filtered microarray probeset ex
 ```{r loadrf, echo=FALSE, error=FALSE, warning=FALSE, cache=TRUE, message=FALSE}
 load("../cache/rf.eset.RData")
 load("../cache/rf.predict.RData")
-load("../cache/rf.eset.unsupervised.RData")
+# load("../cache/rf.eset.unsupervised.RData")
 ```
 
 ``` {r table1, echo=FALSE, results='asis'}
