@@ -238,7 +238,7 @@ load("../cache/rf.eset.nouiso.RData")
 
 ### Table S3: Variant MCC cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
 
-The mean prediction votes of UISO cell line samples and Mkl-1 and WaGa samples (labeled MCC) are given.
+The mean prediction votes of variant (MCC13, MCC26, and UISO) and classic (Mkl-1 and WaGa; labeled MCC) cell line samples are given.
 ^* The MCC samples are used for training so bias may exist.
 See Table S4 for unbiased prediction estimates of Mkl-1 and WaGa samples.
 
