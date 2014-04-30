@@ -305,15 +305,22 @@ print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 
 <div style="page-break-after:always"></div>
 
-### Table S6: Short tandem repeat (STR) fingerprinting results for the WaGa, Mkl-1, and UISO cell lines using 16 markers from the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems).
+### Table S6: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
+
+The WaGa, Mkl-1, and UISO cell lines were analyzed with the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems) while the MCC13 and MCC26 cell lines were analyzed with the PowerPlex 18D Kit (Promega).
+The two kits analyze the same 16 markers, while the Promega kit includes to additional markers (Penta D and E).
 
 ```{r TableS6, results='asis', echo=FALSE}
 
-sky.data <- read.table("../data/sky.tsv", sep="\t", header=TRUE)
+str.data <- read.table("../data/str.tsv", sep="\t", header=TRUE, stringsAsFactors=FALSE)
 
-colnames(sky.data) <- c("Marker", "UISO (early passage)", "UISO (late passage)", "WaGa", "Mkl-1")
+rownames(str.data) <- str.data$Marker
+str.data <- str.data[, -1]
+colnames(str.data) <- c("UISO (early)", "UISO (late)", "WaGa", "Mkl-1", "MCC13", "MCC26")
 
-sky.xtbl <- xtable(sky.data, align=c('r', 'r', 'c', 'c', 'c', 'c'))
+str.data[str.data == ""] <- "-"
 
-print(sky.xtbl, sanitize.text.function=I, include.rownames=FALSE)
+str.xtbl <- xtable(str.data, align=c('r', 'c', 'c', 'c', 'c', 'c', 'c'))
+
+print(str.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 ```
