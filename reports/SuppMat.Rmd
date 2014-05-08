@@ -22,7 +22,8 @@ library(plyr)
 library(cluster)
 library(xtable)
 library(MASS)
- 
+library(limma)
+
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
 
 ```
@@ -324,3 +325,36 @@ str.xtbl <- xtable(str.data, align=c('r', 'c', 'c', 'c', 'c', 'c', 'c'))
 
 print(str.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 ```
+
+```{r loadtumordiffexpr, echo=FALSE, error=FALSE, warning=FALSE, cache=FALSE, message=FALSE}
+load("../cache/fit2.tumors.MCPyV.status.RData")
+load("../cache/fit2.tumors.privsmet.RData")
+load("../cache/fit2.tumors.recurrence.RData")
+load("../cache/fit2.tumors.stage.code.RData")
+```
+
+<div style="page-break-after:always"></div>
+
+### Table S7: Differential expression of MCC tumor samples using clinical parameters.
+
+The number of probesets that passed significance thresholds for pairwise differential expression tests (fold change > 2 and q-value < 0.05) and the minimum q-value observed in each pairwise differential expression test.
+
+```{r TableS7, results='asis', echo=FALSE}
+fit2.list <- list(MCPyV.status=fit2.tumors.MCPyV.status,
+                  privsmet=fit2.tumors.privsmet,
+                  recurrence=fit2.tumors.recurrence,
+                  stage.code=fit2.tumors.stage.code)
+
+fit2.nrows <- ldply(fit2.list, function(x) nrow(topTable(x, number=Inf, lfc=1, p=0.05)))
+fit2.minqval <- ldply(fit2.list, function(x) min(topTable(x, number=Inf)$adj.P.Val))
+
+fit2.data <- data.frame(number=fit2.nrows$V1, minqval=fit2.minqval$V1)
+rownames(fit2.data) <- c("MCV Status", "Primary vs. Metastasis", "Recurrence", "Stage")
+
+colnames(fit2.data) <- c("# Significant Probesets", "Minimum q-value")
+fit2.xtbl <- xtable(fit2.data, align=c('r', 'c', 'c'))
+print(fit2.xtbl, sanitize.text.function=I, include.rownames=TRUE)
+
+```
+
+
