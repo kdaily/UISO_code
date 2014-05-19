@@ -348,11 +348,14 @@ fit2.list <- list(MCPyV.status=fit2.tumors.MCPyV.status,
 fit2.nrows <- ldply(fit2.list, function(x) nrow(topTable(x, number=Inf, lfc=1, p=0.05)))
 fit2.minqval <- ldply(fit2.list, function(x) min(topTable(x, number=Inf)$adj.P.Val))
 
-fit2.data <- data.frame(number=fit2.nrows$V1, minqval=fit2.minqval$V1)
+class1 <- c("Positive (16)", "Primary (10)", "No (7)", "Early (5)")
+class2 <- c("Negative (7)", "Metastasis (13)", "Yes (16)", "Late (18)")
+fit2.data <- data.frame(class1=class1, class2=class2, number=fit2.nrows$V1, minqval=fit2.minqval$V1)
+
 rownames(fit2.data) <- c("MCV Status", "Primary vs. Metastasis", "Recurrence", "Stage")
 
-colnames(fit2.data) <- c("# Significant Probesets", "Minimum q-value")
-fit2.xtbl <- xtable(fit2.data, align=c('r', 'c', 'c'))
+colnames(fit2.data) <- c("Class 1", "Class 2", "# Significant Probesets", "Minimum q-value")
+fit2.xtbl <- xtable(fit2.data, align=c('r', 'r', 'r', 'c', 'c'))
 print(fit2.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 
 ```
