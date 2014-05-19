@@ -2,10 +2,16 @@ Code for *"Assessment of Cancer Cell Line Representativeness using Microarrays f
 
 This repository contains all of the code necessary to run data analysis and produce figures and tables for the publication.
 
-R 3.0 or better is required.
+License
+------
+
+The content of this project is licensed under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-nc-sa/4.0/) license.
+
 
 Setup
 -----
+
+R 3.0 or better is required.
 
 Consult or run/source `setup.R` for installation of all required packages.
 
