@@ -288,7 +288,7 @@ rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype 
 predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)[, -ncol(rf.eset.nouiso.predict.train)]
 
 print(xtable(predictions.combined, digits=3, align='rccccccccc'))
-write.table(predictions.combined, file="tables/tables4.csv")
+write.csv(predictions.combined, file="tables/tables4.csv")
 
 # avgvotes <- ddply(predictions.combined, .variables="cancertype", colwise(mean, is.numeric))
 # 
@@ -330,7 +330,7 @@ rownames(avgoobvotes.formatted) <- colnames(avgoobvotes.formatted)
 
 
 print(xtable(avgoobvotes.formatted, align='rccccccccc'), sanitize.text.function=I)
-write.table(avgoobvotes.formatted, file="tables/tables5.csv")
+write.csv(avgoobvotes.formatted, file="tables/tables5.csv")
 ```
 
 <div style="page-break-after:always"></div>
@@ -344,7 +344,7 @@ colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution"
 antibody.xtbl <- xtable(antibody.data)
 
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
-write.table(antibody.data, file="tables/tables6.csv")
+write.csv(antibody.data, file="tables/tables6.csv")
 ```
 
 <div style="page-break-after:always"></div>
@@ -368,7 +368,7 @@ str.xtbl <- xtable(str.data, align=c('r', 'c', 'c', 'c', 'c', 'c', 'c'))
 
 print(str.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 
-write.table(str.data, file="tables/tables7.csv")
+write.csv(str.data, file="tables/tables7.csv")
 ```
 
 
