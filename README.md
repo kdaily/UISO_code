@@ -1,7 +1,6 @@
-Code for *"The UISO Cell Line is Not Representative of Merkel Cell Carcinoma"*
-========================================================
+Code for *"Assessment of Cancer Cell Line Representativeness using Microarrays for Merkel Cell Carcinoma"*.
 
-This repository contains all of the code necessary to run data analysis and produce figures for the publication.
+This repository contains all of the code necessary to run data analysis and produce figures and tables for the publication.
 
 R 3.0 or better is required.
 
