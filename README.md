@@ -1,9 +1,9 @@
-Supplementary Code for *"The UISO Cell Line is Not Representative of Merkel Cell Carcinoma"*
+Code for *"The UISO Cell Line is Not Representative of Merkel Cell Carcinoma"*
 ========================================================
 
-This repository contains all of the code necessary to analyze and produce figures for the publication.
+This repository contains all of the code necessary to run data analysis and produce figures for the publication.
 
-R 2.15 or better is required.
+R 3.0 or better is required.
 
 Setup
 -----
