@@ -163,7 +163,9 @@ print(fit2.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
 mcv.corr <- transform(mcv.corr, comparison=factor(comparison, labels=gsub("\\.", " vs. ", levels(comparison))))
 mcv.corr.cast <- cast(mcv.corr, comparison ~ MCPyV.status, value="median")
-xtable(mcv.corr.cast[1:3, ], include.rownames=FALSE)
+rownames(mcv.corr.cast) <- mcv.corr.cast$comparison
+mcv.corr.xtbl <- xtable(mcv.corr.cast[1:3, -1])
+print(mcv.corr.xtbl, include.rownames=TRUE)
 ```
 
 ### Table S3: Gene Set Enrichment Analysis (GSEA) on KEGG pathways using differentially expressed genes in the cell lines
