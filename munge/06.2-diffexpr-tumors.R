@@ -53,6 +53,7 @@ fit.tumors.stage.code <- lmFit(eset.tumors, design.tumors.stage.code, weights=ar
 fit2.tumors.stage.code <- contrasts.fit(fit.tumors.stage.code, cont.matrix.tumors.stage.code)
 fit2.tumors.stage.code <- eBayes(fit2.tumors.stage.code)
 
+ProjectTemplate::cache('eset.tumors')
 ProjectTemplate::cache("fit2.tumors.privsmet")
 ProjectTemplate::cache("fit2.tumors.recurrence")
 ProjectTemplate::cache("fit2.tumors.stage.code")
