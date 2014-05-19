@@ -153,6 +153,7 @@ rownames(fit2.data) <- c("MCV Status", "Primary vs. Metastasis", "Recurrence", "
 colnames(fit2.data) <- c("Class 1", "Class 2", "# Significant Probesets", "Minimum q-value")
 fit2.xtbl <- xtable(fit2.data, align=c('r', 'r', 'r', 'c', 'c'))
 print(fit2.xtbl, sanitize.text.function=I, include.rownames=TRUE)
+write.csv(fit2.data, file="tables/tables1.csv")
 
 ```
 
@@ -164,8 +165,10 @@ mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) d
 mcv.corr <- transform(mcv.corr, comparison=factor(comparison, labels=gsub("\\.", " vs. ", levels(comparison))))
 mcv.corr.cast <- cast(mcv.corr, comparison ~ MCPyV.status, value="median")
 rownames(mcv.corr.cast) <- mcv.corr.cast$comparison
-mcv.corr.xtbl <- xtable(mcv.corr.cast[1:3, -1])
+mcv.corr.cast <- mcv.corr.cast[1:3, -1]
+mcv.corr.xtbl <- xtable(mcv.corr.cast)
 print(mcv.corr.xtbl, include.rownames=TRUE)
+write.csv(mcv.corr.cast, file="tables/tables2.csv")
 ```
 
 ### Table S3: Gene Set Enrichment Analysis (GSEA) on KEGG pathways using differentially expressed genes in the cell lines
@@ -260,6 +263,8 @@ To identify KEGG pathways (n = `r nrow(merged.data.wide)`) that are affected sim
 ```{r TableS3, echo=FALSE, results='asis'}
 tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
+write.csv(merged.data.wide, file="tables/tables3.csv")
+
 ``` 
 
 
@@ -283,6 +288,8 @@ rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype 
 predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)[, -ncol(rf.eset.nouiso.predict.train)]
 
 print(xtable(predictions.combined, digits=3, align='rccccccccc'))
+write.table(predictions.combined, file="tables/tables4.csv")
+
 # avgvotes <- ddply(predictions.combined, .variables="cancertype", colwise(mean, is.numeric))
 # 
 # rownames(avgvotes) <- c("MCC*", "MCC Variant")
@@ -323,6 +330,7 @@ rownames(avgoobvotes.formatted) <- colnames(avgoobvotes.formatted)
 
 
 print(xtable(avgoobvotes.formatted, align='rccccccccc'), sanitize.text.function=I)
+write.table(avgoobvotes.formatted, file="tables/tables5.csv")
 ```
 
 <div style="page-break-after:always"></div>
@@ -336,6 +344,7 @@ colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution"
 antibody.xtbl <- xtable(antibody.data)
 
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
+write.table(antibody.data, file="tables/tables6.csv")
 ```
 
 <div style="page-break-after:always"></div>
@@ -358,6 +367,8 @@ str.data[str.data == ""] <- "-"
 str.xtbl <- xtable(str.data, align=c('r', 'c', 'c', 'c', 'c', 'c', 'c'))
 
 print(str.xtbl, sanitize.text.function=I, include.rownames=TRUE)
+
+write.table(str.data, file="tables/tables7.csv")
 ```
 
 
