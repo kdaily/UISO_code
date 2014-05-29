@@ -335,26 +335,12 @@ write.csv(avgoobvotes.formatted, file="tables/tables5.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S6: Antibodies used in immunohistochemical analysis.
-
-```{r TableS6, results='asis', echo=FALSE}
-
-antibody.data <- read.csv("../data/antibodies.csv")
-colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution", "Antigen retrievial")
-antibody.xtbl <- xtable(antibody.data)
-
-print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
-write.csv(antibody.data, file="tables/tables6.csv")
-```
-
-<div style="page-break-after:always"></div>
-
-### Table S7: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
+### Table S6: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
 
 The WaGa, Mkl-1, and UISO cell lines were analyzed with the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems) while the MCC13 and MCC26 cell lines were analyzed with the PowerPlex 18D Kit (Promega).
-The two kits analyze the same 16 markers, while the Promega kit includes to additional markers (Penta D and E).
+The two kits analyze the same 16 markers, while the Promega kit includes two additional markers (Penta D and E).
 
-```{r TableS7, results='asis', echo=FALSE}
+```{r TableS6, results='asis', echo=FALSE}
 
 str.data <- read.table("../data/str.tsv", sep="\t", header=TRUE, stringsAsFactors=FALSE)
 
@@ -368,8 +354,19 @@ str.xtbl <- xtable(str.data, align=c('r', 'c', 'c', 'c', 'c', 'c', 'c'))
 
 print(str.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 
-write.csv(str.data, file="tables/tables7.csv")
+write.csv(str.data, file="tables/tables6.csv")
 ```
 
+<div style="page-break-after:always"></div>
 
+### Table S7: Antibodies used in immunohistochemical analysis.
 
+```{r TableS7, results='asis', echo=FALSE}
+
+antibody.data <- read.csv("../data/antibodies.csv")
+colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution", "Antigen retrieval")
+antibody.xtbl <- xtable(antibody.data)
+
+print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
+write.csv(antibody.data, file="tables/tables7.csv")
+```
