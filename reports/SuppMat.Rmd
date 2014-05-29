@@ -352,7 +352,7 @@ write.csv(antibody.data, file="tables/tables6.csv")
 ### Table S7: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
 
 The WaGa, Mkl-1, and UISO cell lines were analyzed with the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems) while the MCC13 and MCC26 cell lines were analyzed with the PowerPlex 18D Kit (Promega).
-The two kits analyze the same 16 markers, while the Promega kit includes to additional markers (Penta D and E).
+The two kits analyze the same 16 markers, while the Promega kit includes two additional markers (Penta D and E).
 
 ```{r TableS7, results='asis', echo=FALSE}
 
