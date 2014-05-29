@@ -340,7 +340,7 @@ write.csv(avgoobvotes.formatted, file="tables/tables5.csv")
 ```{r TableS6, results='asis', echo=FALSE}
 
 antibody.data <- read.csv("../data/antibodies.csv")
-colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution", "Antigen retrievial")
+colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution", "Antigen retrieval")
 antibody.xtbl <- xtable(antibody.data)
 
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
