@@ -15,4 +15,8 @@ clinical.data$type <- factor(clinical.data$type,
 
 rownames(clinical.data) <- clinical.data$sample
 
+clinical.data.hgu133plus2 <- transform(clinical.data.hgu133plus2,
+                                       MCPyV.status=factor(MCPyV.status, levels=c("negative","positive"), 
+                                                           labels=c("Virus negative", "Virus positive"),
+                                                           ordered=TRUE))
 ProjectTemplate::cache("clinical.data")
