@@ -89,62 +89,27 @@ Figure 1B: UISO cell line samples are in a distinct group from MCC tumor samples
 Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by PC’s one and two are 23% and 20%, respectively (PC3: 7%).
 
 ```{r fig1b, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
-## Plot on PC1 and PC2
-pc.data <- data.frame(pc, sample=rownames(pc))
-rownames(pc.data) <- rownames(pc)
-pc.data <- cbind(pc.data[rownames(pc), ], pData(dataset)[rownames(pc), ])
-
-pc.data$newclass <- ifelse(pc.data$class == "Tumor",
-                           as.character(pc.data$cancertype),
-                           as.character(pc.data$class))
-
-pc.data$newclass <- factor(pc.data$newclass, ordered=TRUE,
-                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC13", "MCC26", "MCC", "SCLC"),
-                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC13", "MCC26", "MCC Tumor", "SCLC Tumor"))
-
-p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(shape=sample.type, color=newclass),
-                                                     size=6)
-
-p <- p + geom_text(label=pc.data$sample)
-# p <- p + xlim(-80, 140)
-
+## Plot on PC1 and PC2, PC3
+# pairs plot
 type.colors <- c(brewer.pal(9, "Blues")[c(8, 4, 6)], 
                  brewer.pal(9, "Greens")[c(8)], 
                  brewer.pal(9, "Oranges")[c(4, 6)], 
                  brewer.pal(9, "Blues")[c(9)], 
                  brewer.pal(9, "Reds")[c(8)]) 
 
-point.shapes <- c(19,19,19,19,19,19,17,17)
+plotdata$color <- type.colors[match(plotdata$newclass, levels(plotdata$newclass))]
 
-p <- p + scale_color_manual("Sample group", values=type.colors)
-p <- p + scale_shape_manual("Sample type", values=c(19,17), guide = 'none')
-p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=point.shapes)))
+pp <- dget("pca3dview.R")
 
-xlabel <- substitute(paste("Principal component 1 (", sigma^2, " = ", s2, ")"),
-                     list(s2=round(pca.var[1, "variance"], 2)))
-ylabel <- substitute(paste("Principal component 2 (", sigma^2, " = ", s2, ")"),
-                     list(s2=round(pca.var[2, "variance"], 2)))
-
-p <- p + labs(x=xlabel, y=ylabel)
-
-title.size <- 20
-text.size <- 18
-p <- p + theme_bw() + theme(legend.position="top",
-                            #legend.position=c(0.87, 0.87),
-                            #legend.position=c(0.15, 0.85),
-                            legend.title=element_text(size=title.size),
-                            legend.text=element_text(size=text.size),
-                            legend.background=element_rect(colour="black"),
-                            axis.title.x=element_text(size=title.size),
-                            axis.title.y=element_text(size=title.size, angle=90),
-                            # axis.text.x=element_text(size=text.size),
-                            # axis.text.y=element_text(size=text.size),
-                            axis.text.x=element_blank(), axis.text.y=element_blank(),
-                            panel.background=element_rect())
-
-print(p)
-
-# ggsave("../graphs/fig1b.pdf", p, width=10, height=10)
+plot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+       xlab="PC1", ylab="PC2", zlab="PC3", 
+       type="s", col=plotdata$color, size=1,
+       box=TRUE, axes=TRUE)
+par3d(pp)
+rgl.postscript("../graphs/fig1b.eps", fmt="eps", drawText=TRUE)
+dev.off()
+# pp <- par3d(no.readonly=TRUE)
+# dput(pp, file="pca3dview.R", control = "all")
 
 ```
 
