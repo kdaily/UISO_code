@@ -20,7 +20,7 @@ library(RColorBrewer)
 library(dendextend)
 library(Vennerable)
 library(rgl)
-
+library(scatterplot3d)
 options(xtable.type="html")
 ```
 
@@ -109,8 +109,21 @@ s3d <- scatterplot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3,
                      pch=20,
                      angle=40,
                      scale.y=0.75,
-                     lwd=4
+                     lwd=6
                      )
+
+pdf("../graphs/fig1b.pdf", width=8, height=8)
+s3d <- scatterplot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+                     xlab="PC1", ylab="PC2", zlab="PC3", 
+                     color=plotdata$color,
+                     col.grid="lightblue",
+                     col.axis="blue",
+                     pch=20,
+                     angle=40,
+                     scale.y=0.75,
+                     lwd=6
+                     )
+foo <- dev.off()
 
 # # Look at plot in 3D and rotate
 # library(rgl)
@@ -146,7 +159,7 @@ load("../cache/testdec.df.RData")
 testdec.venn <- Venn(testdec.list)
 pdf("../graphs/proportionalvenn.cellvstumor.pdf", width=15, height=15)
 plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
-dev.off()
+foo <- dev.off()
 
 plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
 
@@ -171,6 +184,9 @@ Figure 3: Variant cell lines UISO, MCC13, and MCC26 are in a distinct group from
 --------------------
 ```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=FALSE}
 load("../cache/eset.batcheffect.nomod.RData")
+```
+
+```{r pcaccle, message=FALSE, warning=FALSE, echo=FALSE, cache=FALSE}
 
 dataset <- eset.batcheffect.nomod
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
