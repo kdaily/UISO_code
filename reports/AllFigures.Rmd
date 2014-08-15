@@ -36,6 +36,14 @@ plotdata <- data.frame(pc, sample=rownames(pc))
 rownames(plotdata) <- rownames(pc)
 plotdata <- cbind(plotdata[rownames(pc), ], pData(dataset)[rownames(pc), ])
 
+plotdata$newclass <- ifelse(plotdata$class == "Tumor",
+                           as.character(plotdata$cancertype),
+                           as.character(plotdata$class))
+
+plotdata$newclass <- factor(plotdata$newclass, ordered=TRUE,
+                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC13", "MCC26", "MCC", "SCLC"),
+                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC13", "MCC26", "MCC Tumor", "SCLC Tumor"))
+
 pca.summary <- summary(pca)
 pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary$importance[2, ]))
 
@@ -48,8 +56,6 @@ Figure 1A: UISO cell lines cluster separately from other MCC samples and cell li
 Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus Spearman's rank correlation coefficient was used as a dissimilarity metric.
 
 ```{r fig1a, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
-dataset <- eset.original.filter
-
 d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
 agnes.hc <- agnes(d, diss=TRUE, method='average')
 
@@ -76,6 +82,7 @@ dev.off() # so device number is not printed.
 
 ```
 
+
 Figure 1B: UISO cell line samples are in a distinct group from MCC tumor samples and classic MCC cell lines.
 --------------------
 
@@ -92,22 +99,26 @@ pc.data$newclass <- ifelse(pc.data$class == "Tumor",
                            as.character(pc.data$class))
 
 pc.data$newclass <- factor(pc.data$newclass, ordered=TRUE,
-                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC", "SCLC"),
-                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC Tumor", "SCLC Tumor"))
+                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC13", "MCC26", "MCC", "SCLC"),
+                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC13", "MCC26", "MCC Tumor", "SCLC Tumor"))
 
 p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(shape=sample.type, color=newclass),
                                                      size=6)
 
-p <- p + xlim(-80, 140)
+p <- p + geom_text(label=pc.data$sample)
+# p <- p + xlim(-80, 140)
 
 type.colors <- c(brewer.pal(9, "Blues")[c(8, 4, 6)], 
-                 brewer.pal(9, "Greens")[c(7)], 
+                 brewer.pal(9, "Greens")[c(8)], 
+                 brewer.pal(9, "Oranges")[c(4, 6)], 
                  brewer.pal(9, "Blues")[c(9)], 
                  brewer.pal(9, "Reds")[c(8)]) 
 
+point.shapes <- c(19,19,19,19,19,19,17,17)
+
 p <- p + scale_color_manual("Sample group", values=type.colors)
 p <- p + scale_shape_manual("Sample type", values=c(19,17), guide = 'none')
-p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=c(19,19,19,19,17,17))))
+p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=point.shapes)))
 
 xlabel <- substitute(paste("Principal component 1 (", sigma^2, " = ", s2, ")"),
                      list(s2=round(pca.var[1, "variance"], 2)))
@@ -118,7 +129,8 @@ p <- p + labs(x=xlabel, y=ylabel)
 
 title.size <- 20
 text.size <- 18
-p <- p + theme_bw() + theme(legend.position=c(0.87, 0.87),
+p <- p + theme_bw() + theme(legend.position="top",
+                            #legend.position=c(0.87, 0.87),
                             #legend.position=c(0.15, 0.85),
                             legend.title=element_text(size=title.size),
                             legend.text=element_text(size=text.size),
