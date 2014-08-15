@@ -7,7 +7,8 @@ dataset <- eset.original.filter
 # Predict on cell lines
 samplenames.predict <- c("MC01", "Mkl-1_1", "Mkl-1_2", "Mkl-1_3", "Mkl-1_4", "Mkl-1_5", "Mkl-1_6",
                          "Waga_1", "Waga_2", "Waga_3", "Waga_4", "Waga_5", "Waga_6",
-                         "UISO_1", "UISO_2", "UISO_3", "UISO_4", "UISO_5", "UISO_6")
+                         "UISO_1", "UISO_2", "UISO_3", "UISO_4", "UISO_5", "UISO_6",
+                         "MCC13_1", "MCC13_2", "MCC13_3", "MCC26_1", "MCC26_2", "MCC26_3")
 
 # Train on tumor samples
 samplenames.train <- sampleNames(dataset)[!(sampleNames(dataset) %in% samplenames.predict)]
