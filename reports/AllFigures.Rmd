@@ -18,6 +18,8 @@ library(venneuler)
 library(limma) # For vennDiagram
 library(RColorBrewer)
 library(dendextend)
+library(Vennerable)
+library(rgl)
 
 options(xtable.type="html")
 ```
@@ -78,7 +80,7 @@ plot(hc, xlab="Dissimilarity = 1 - Correlation", main="")
 text(x=5.4, y=c(0.3, 0.27, 0.24),
      labels=c("MCV-positive", "MCV-negative", "Not tested"),
      col=c("red", "blue", "black"), cex=1.25)
-dev.off() # so device number is not printed.
+foo <- dev.off() # so device number is not printed.
 
 ```
 
@@ -99,15 +101,27 @@ type.colors <- c(brewer.pal(9, "Blues")[c(8, 4, 6)],
 
 plotdata$color <- type.colors[match(plotdata$newclass, levels(plotdata$newclass))]
 
-pp <- dget("pca3dview.R")
+s3d <- scatterplot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+                     xlab="PC1", ylab="PC2", zlab="PC3", 
+                     color=plotdata$color,
+                     col.grid="lightblue",
+                     col.axis="blue",
+                     pch=20,
+                     angle=40,
+                     scale.y=0.75,
+                     lwd=4
+                     )
 
-plot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
-       xlab="PC1", ylab="PC2", zlab="PC3", 
-       type="s", col=plotdata$color, size=1,
-       box=TRUE, axes=TRUE)
-par3d(pp)
-rgl.postscript("../graphs/fig1b.eps", fmt="eps", drawText=TRUE)
-dev.off()
+# # Look at plot in 3D and rotate
+# library(rgl)
+# pp <- dget("pca3dview.R")
+# 
+# plot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+#        xlab="PC1", ylab="PC2", zlab="PC3", 
+#        type="s", col=plotdata$color, size=1,
+#        box=TRUE, axes=TRUE)
+# par3d(pp)
+# 
 # pp <- par3d(no.readonly=TRUE)
 # dput(pp, file="pca3dview.R", control = "all")
 
@@ -134,6 +148,8 @@ pdf("../graphs/proportionalvenn.cellvstumor.pdf", width=15, height=15)
 plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
 dev.off()
 
+plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
+
 # # This is a workaround using venneuler
 # # The plot is representative of the one in the publication
 # setmember <- with(ldply(testdec.list, .fun=length), rep(.id, V1))
@@ -153,7 +169,7 @@ dev.off()
 
 Figure 3: Variant cell lines UISO, MCC13, and MCC26 are in a distinct group from other MCC cell lines and neuroendocrine lines from the Cancer Cell Line Encyclopedia.
 --------------------
-```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE}
+```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=FALSE}
 load("../cache/eset.batcheffect.nomod.RData")
 
 dataset <- eset.batcheffect.nomod
@@ -251,10 +267,11 @@ load("../cache/rf.predict.RData")
 ```
 
 ``` {r table1, echo=FALSE, results='asis'}
-rf.predict$class <- factor(rf.predict$class, levels=c("WaGa", "Mkl1", "MC01", "UISO"), 
-                           labels=c("WaGa", "Mkl-1", "MC01", "UISO"))
-rf.predict.mean <- ddply(rf.predict, "class", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
-rownames(rf.predict.mean) <- rf.predict.mean$class
+rf.predict$class2 <- factor(rf.predict$class,
+                            levels=c("WaGa", "Mkl1", "MC01", "MCC13", "MCC26", "UISO"), 
+                            labels=c("WaGa", "Mkl-1", "MC01", "MCC13", "MCC26", "UISO"))
+rf.predict.mean <- ddply(rf.predict, "class2", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
+rownames(rf.predict.mean) <- rf.predict.mean$class2
 rf.predict.mean <- rf.predict.mean[, -1]
 rf.predict.mean.xtable <- xtable(rf.predict.mean, align='rcc')
 print(rf.predict.mean.xtable)
