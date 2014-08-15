@@ -8,27 +8,29 @@ eset.tumor.vs.cell <- eset.original.filter[, MCC.sample.names]
 ## array.weights <- arrayWeights(eset.tumor.vs.cell, design.tumor.vs.cell)
 array.weights <- NULL
 
-design.tumor.vs.cell <- model.matrix(~0 + pData(eset.tumor.vs.cell)$class)
-colnames(design.tumor.vs.cell) <- levels(pData(eset.tumor.vs.cell)$class)
+design.tumor.vs.cell <- model.matrix(~0 + pData(eset.tumor.vs.cell)$classic)
+colnames(design.tumor.vs.cell) <- levels(pData(eset.tumor.vs.cell)$classic)
 
-cont.matrix.tumor.vs.cell <- makeContrasts(Tumor.Mkl1=Mkl1 - Tumor,
-                                           Tumor.WaGa=WaGa- Tumor,
-                                           Tumor.UISO=UISO - Tumor,
-                                           Mkl1.WaGa=Mkl1 - WaGa,
-                                           Mkl1.UISO=Mkl1 - UISO,
-                                           WaGa.UISO=WaGa - UISO,
+cont.matrix.tumor.vs.cell <- makeContrasts(Tumor.Classic=ClassicCellLine - Tumor,
+                                           Tumor.Variant=VariantCellLine- Tumor,
+                                           Tumor.UISO=UISOCellLine - Tumor,
+                                           Classic.Variant=ClassicCellLine - VariantCellLine,
+                                           Classic.UISO=ClassicCellLine - UISOCellLine,
+                                           Variant.UISO=VariantCellLine - UISOCellLine,
                                            levels=design.tumor.vs.cell)
 
-fit.tumor.vs.cell <- lmFit(eset.tumor.vs.cell, design.tumor.vs.cell, weights=array.weights, method="ls")
+fit.tumor.vs.cell <- lmFit(eset.tumor.vs.cell, design.tumor.vs.cell,
+                           weights=array.weights, method="ls")
+
 fit2.tumor.vs.cell <- contrasts.fit(fit.tumor.vs.cell, cont.matrix.tumor.vs.cell)
 fit2.tumor.vs.cell <- eBayes(fit2.tumor.vs.cell)
 
 testdec <- decideTests(fit2.tumor.vs.cell, adjust.method="BH", p.value=0.05, lfc=1)
-testdec.df <- abs(as.data.frame(testdec)[, c('Tumor.UISO', 'Tumor.Mkl1', 'Tumor.WaGa')])
+testdec.df <- abs(as.data.frame(testdec)[, c('Tumor.Classic', 'Tumor.Variant', 'Tumor.UISO')])
 
 testdec.list <- list(Tumor.UISO=rownames(subset(testdec.df, Tumor.UISO != 0)),
-                     Tumor.Mkl1=rownames(subset(testdec.df, Tumor.Mkl1 != 0)),
-                     Tumor.WaGa=rownames(subset(testdec.df, Tumor.WaGa != 0)))
+                     Tumor.Classic=rownames(subset(testdec.df, Tumor.Classic != 0)),
+                     Tumor.Variant=rownames(subset(testdec.df, Tumor.Variant != 0)))
 
 ProjectTemplate::cache('testdec')
 ProjectTemplate::cache('testdec.list')
