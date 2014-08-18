@@ -14,9 +14,9 @@ colnames(design.tumor.vs.cell) <- levels(pData(eset.tumor.vs.cell)$classic)
 cont.matrix.tumor.vs.cell <- makeContrasts(Tumor.Classic=ClassicCellLine - Tumor,
                                            Tumor.Variant=VariantCellLine- Tumor,
                                            Tumor.UISO=UISOCellLine - Tumor,
-                                           Classic.Variant=ClassicCellLine - VariantCellLine,
-                                           Classic.UISO=ClassicCellLine - UISOCellLine,
-                                           Variant.UISO=VariantCellLine - UISOCellLine,
+#                                            Classic.Variant=ClassicCellLine - VariantCellLine,
+#                                            Classic.UISO=ClassicCellLine - UISOCellLine,
+#                                            Variant.UISO=VariantCellLine - UISOCellLine,
                                            levels=design.tumor.vs.cell)
 
 fit.tumor.vs.cell <- lmFit(eset.tumor.vs.cell, design.tumor.vs.cell,
