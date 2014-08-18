@@ -24,6 +24,8 @@ library(xtable)
 library(MASS)
 library(limma)
 
+source("./lib.R")
+
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
 
 ```
@@ -37,7 +39,9 @@ load("../cache/eset.original.filter.RData")
 dataset <- eset.original.filter
 ```
 
-```{r pcascatter, fig.width=15, fig.height=15}
+### Figure S0: Scatterplot matrix of first three principal components.
+
+```{r figs0, fig.width=15, fig.height=15}
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
 pc <- pca$x
 
@@ -57,7 +61,7 @@ plotdata$newclass <- factor(plotdata$newclass, ordered=TRUE,
 gg1 = makePairs(plotdata[, c("PC1", "PC2", "PC3")])
 
 # new data frame mega iris
-mega_data = data.frame(gg1$all,
+mega_data <- data.frame(gg1$all,
                        class=rep(plotdata$newclass, length=nrow(gg1$all)),
                        sample.type=rep(plotdata$sample.type, length=nrow(gg1$all)),
                        MCPyV.status=rep(plotdata$MCPyV.status, length=nrow(gg1$all)))
@@ -96,19 +100,16 @@ p
 
 ```
 
-```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
+### Figure S1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
 
-dataset.original <- eset.original.filter
+Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
-# Subset of samples and make sample classes
-which.MCCtumor <- grep("MT.*", sampleNames(dataset.original))
-which.mkl1 <- grep("Mkl.*", sampleNames(dataset.original))
-which.waga <- grep("Waga.*", sampleNames(dataset.original))
-which.uiso <- grep("UISO.*", sampleNames(dataset.original))
+```{r prepfigS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
 
-keep <- c(which.MCCtumor, which.mkl1, which.waga, which.uiso)
-dataset.original <- dataset.original[, keep]
+# MCC samples only, don't use MC01 since it's a singleton
 
+keep <- with(pData(eset.original.filter), which(cancertype == "MCC" & sample != "MC01"))
+dataset.original <- eset.original.filter[, keep]
 dataset <- dataset.original
 
 # Compute correlation
@@ -117,12 +118,17 @@ dataset.cor <- cor(exprs(dataset), method='spearman')
 # Keep only the necessary columns and rows and
 # set self correlation values (including within group) to NA
 dataset.cor[upper.tri(dataset.cor, diag=TRUE)] <- NA
+
+dataset.cor[grep("MCC", rownames(dataset.cor)),
+            grep("MCC", rownames(dataset.cor))] <- NA
 dataset.cor[grep("Mkl", rownames(dataset.cor)),
             grep("Mkl", rownames(dataset.cor))] <- NA
 dataset.cor[grep("Waga", rownames(dataset.cor)),
             grep("Waga", rownames(dataset.cor))] <- NA
 dataset.cor[grep("UISO", rownames(dataset.cor)),
             grep("UISO", rownames(dataset.cor))] <- NA
+
+which.MCCtumor <- grep("MT", rownames(dataset.cor))
 
 exclude.rows <- -(1:(length(which.MCCtumor)))
 dataset.cor <- dataset.cor[exclude.rows, ]
@@ -137,30 +143,57 @@ dataset.cor.melted$variable <- factor(gsub("\\.", "-",
 
 # Get sample_class from the phenotypeData based on the sample column
 dataset.cor.melted <- merge(dataset.cor.melted,
-                            pData(dataset)[, c("sample", "class")],
+                            pData(dataset)[, c("sample", "classic")],
                             by.x="sample", by.y="sample")
 
-dataset.cor.melted$class <- factor(dataset.cor.melted$class, 
-                                   levels=c("WaGa", "Mkl1", "UISO"),
+dataset.cor.melted$classic <- factor(dataset.cor.melted$classic, 
+                                   levels=c("ClassicCellLine", "VariantCellLine", "UISOCellLine"),
                                    # labels=c("WaGa", "Mkl-1", "UISO"),
                                    ordered=TRUE)
 
 # Get everything from the phenotypeData again, based on the variable column
-dataset.cor.melted <- merge(dataset.cor.melted, pData(dataset.original), by.x="variable", by.y="sample")
-dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'class.x', "class.y", "MCPyV.status")]
+dataset.cor.melted <- merge(dataset.cor.melted,
+                            pData(dataset),
+                            by.x="variable", by.y="sample")
+
+dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'classic.x', "classic.y", "MCPyV.status")]
 
 # Add some grouping factors
 dataset.cor.melted <- transform(dataset.cor.melted,
-                                comparison=factor(with(dataset.cor.melted, paste(class.x, class.y, sep=".")),
-                                                  levels=c("WaGa.Tumor", "Mkl1.Tumor", "UISO.Tumor", "WaGa.Mkl1", "UISO.WaGa", "UISO.Mkl1"),
-                                                  labels=c("WaGa.Tumor", "Mkl-1.Tumor", "UISO.Tumor", "WaGa.Mkl-1", "UISO.WaGa", "UISO.Mkl-1"),
-                                                  ordered=TRUE),
-                                tumorORnot=factor(dataset.cor.melted$class.y == "Tumor", #c("MCC Tumor", "SCLC Tumor"), 
+                                comparison=factor(paste(classic.x, classic.y, sep=".")),
+                                tumorORnot=factor(dataset.cor.melted$classic.y == "Tumor",
                                                   labels=c("Cell line vs. cell line", "Cell line vs. tumor")))
 
+dataset.cor.melted$comparison <- gsub("CellLine", "", dataset.cor.melted$comparison)
+
+dataset.cor.melted$finalcomp <- NULL
+
+classicvsvariant <- with(dataset.cor.melted, 
+                         comparison %in% c("Classic.Variant", "Variant.Classic"))
+dataset.cor.melted$finalcomp[classicvsvariant] <- "ClassicVariant"
+
+classicvsuiso <- with(dataset.cor.melted, 
+                      comparison %in% c("Classic.UISO", "UISO.Classic"))
+dataset.cor.melted$finalcomp[classicvsuiso] <- "ClassicUISO"
+
+variantvsuiso <- with(dataset.cor.melted, 
+                      comparison %in% c("Variant.UISO", "UISO.Variant"))
+dataset.cor.melted$finalcomp[variantvsuiso] <- "VariantUISO"
+
+classicvsclassic <- with(dataset.cor.melted, 
+                      comparison %in% c("Classic.Classic"))
+dataset.cor.melted$finalcomp[classicvsclassic] <- "ClassicClassic"
+
+dataset.cor.melted$finalcomp <- ifelse(is.na(dataset.cor.melted$finalcomp),
+                                       as.character(dataset.cor.melted$comparison),
+                                       dataset.cor.melted$finalcomp)
+
+```
+
+```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
 
 # plot
-p <- ggplot(dataset.cor.melted, aes(x=comparison, y=value))
+p <- ggplot(dataset.cor.melted, aes(x=finalcomp, y=value))
 p <- p + geom_boxplot(notch=FALSE, outlier.size=0)
 p <- p + geom_jitter(aes(color=MCPyV.status, shape=MCPyV.status), position=position_jitter(width=0.1), alpha=0.8)
 p <- p + facet_grid(. ~ tumorORnot, scales="free_x")
@@ -168,10 +201,11 @@ p <- p + labs(x="", y=expression(Correlation~(rho)))
 p <- p + scale_color_brewer(palette='Set1')
 p <- p + guides(colour=guide_legend("Tumor MCV Status"), shape=guide_legend("Tumor MCV Status"))
 p <- p + ylim(c(0.5,1))
-p <- p + theme_bw() + theme(axis.text=element_text(size=20), 
+p <- p + theme_bw() + theme(axis.text.x=element_text(size=20, angle=270, vjust=0.5), 
+                            axis.text.y=element_text(size=20), 
                             legend.title=element_text(size=20),
                             legend.text=element_text(size=20),
-                            legend.position=c(0.7, 0.2),
+                            legend.position="top",
                             axis.title.x=element_text(size=20),
                             axis.title.x=element_text(size=20),
                             axis.title.y=element_text(size=20, angle=90),
@@ -221,6 +255,8 @@ write.csv(fit2.data, file="tables/tables1.csv")
 ```{r TableS2, echo=FALSE, results='asis', include=TRUE}
 # Show the median correlation values by mcv status
 mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
+mcv.corr <- mcv.corr[grep("Tumor", mcv.corr$comparison), ]
+mcv.corr$comparison <- factor(mcv.corr$comparison)
 mcv.corr <- transform(mcv.corr, comparison=factor(comparison, labels=gsub("\\.", " vs. ", levels(comparison))))
 mcv.corr.cast <- cast(mcv.corr, comparison ~ MCPyV.status, value="median")
 rownames(mcv.corr.cast) <- mcv.corr.cast$comparison
