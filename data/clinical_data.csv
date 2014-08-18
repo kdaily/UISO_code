@@ -56,5 +56,5 @@ MCC26_3,./data/CEL/hgu133a2/MCC26_p13_CSAS16385.CEL,CSAS16385,cellline,MCC,negat
 MCC13_1,./data/CEL/hgu133a2/MCC13_p36_CSAS16385.CEL,CSAS16385,cellline,MCC,negative,4,VariantCellLine,MCC13,,,
 MCC13_2,./data/CEL/hgu133a2/MCC13_p37_CSAS16385.CEL,CSAS16385,cellline,MCC,negative,4,VariantCellLine,MCC13,,,
 MCC13_3,./data/CEL/hgu133a2/MCC13_p38_CSAS16385.CEL,CSAS16385,cellline,MCC,negative,4,VariantCellLine,MCC13,,,
-UISO_7,./data/CEL/hgu133a2/U_late_CSAS16385.CEL,CSAS16385,cellline,MCC,negative,4,VariantCellLine,UISO,,,
+UISO_7,./data/CEL/hgu133a2/U_late_CSAS16385.CEL,CSAS16385,cellline,MCC,negative,4,UISOCellLine,UISO,,,
 Waga_7,./data/CEL/hgu133a2/Waga_CSAS16385.CEL,CSAS16385,cellline,MCC,positive,4,ClassicCellLine,WaGa,,,
