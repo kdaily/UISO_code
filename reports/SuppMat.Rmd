@@ -23,16 +23,16 @@ library(cluster)
 library(xtable)
 library(MASS)
 library(limma)
+library(knitr)
+library(RColorBrewer)
 
 source("./lib.R")
+source("../lib/gsea_helpers.R")
 
 options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
+opts_chunk$set(comment=NA, echo=FALSE, warning=FALSE, message=FALSE)
 
 ```
-
-### Figure S1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
-
-Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
 ```{r loadexpr, echo=FALSE}
 load("../cache/eset.original.filter.RData")
@@ -41,7 +41,7 @@ dataset <- eset.original.filter
 
 ### Figure S0: Scatterplot matrix of first three principal components.
 
-```{r figs0, fig.width=15, fig.height=15}
+```{r figs0, fig.width=10, fig.height=10}
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
 pc <- pca$x
 
@@ -100,11 +100,13 @@ p
 
 ```
 
-### Figure S1: The WaGa and Mkl-1 cell lines are more similar to MCC tumor samples than the UISO cell line.
+<div style="page-break-after:always"></div>
+
+### Figure S1: The classic cell lines are more similar to MCC tumor samples than the UISO cell line.
 
 Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
-```{r prepfigS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
+```{r prepfigS1, message=FALSE, warning=FALSE, echo=FALSE}
 
 # MCC samples only, don't use MC01 since it's a singleton
 
@@ -190,7 +192,7 @@ dataset.cor.melted$finalcomp <- ifelse(is.na(dataset.cor.melted$finalcomp),
 
 ```
 
-```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=15, fig.height=5}
+```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=8}
 
 # plot
 p <- ggplot(dataset.cor.melted, aes(x=finalcomp, y=value))
@@ -201,15 +203,14 @@ p <- p + labs(x="", y=expression(Correlation~(rho)))
 p <- p + scale_color_brewer(palette='Set1')
 p <- p + guides(colour=guide_legend("Tumor MCV Status"), shape=guide_legend("Tumor MCV Status"))
 p <- p + ylim(c(0.5,1))
-p <- p + theme_bw() + theme(axis.text.x=element_text(size=20, angle=270, vjust=0.5), 
-                            axis.text.y=element_text(size=20), 
+p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0.5), 
+                            axis.text.y=element_text(size=18), 
                             legend.title=element_text(size=20),
-                            legend.text=element_text(size=20),
+                            legend.text=element_text(size=18),
                             legend.position="top",
                             axis.title.x=element_text(size=20),
-                            axis.title.x=element_text(size=20),
                             axis.title.y=element_text(size=20, angle=90),
-                            strip.text.x=element_text(size=24))
+                            strip.text.x=element_text(size=20))
 
 print(p)
 
@@ -266,29 +267,48 @@ print(mcv.corr.xtbl, include.rownames=TRUE)
 write.csv(mcv.corr.cast, file="tables/tables2.csv")
 ```
 
+<div style="page-break-after:always"></div>
+
 ### Table S3: Gene Set Enrichment Analysis (GSEA) on KEGG pathways using differentially expressed genes in the cell lines
 
 ```{r readdata, echo=FALSE}
 # See the following script to reproduce all provided files (assumes that your current directory is the repository root):
 # sh ./data/GSEA/run_GSEA.sh
 
+# Samples annotated as pos or 1 are those that are 
 data <- list()
-data[['tumor.classic.pos']] <- read.table("../data/GSEA/tumor_vs_classic_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
+
+tumor.classic.template <- "../data/GSEA/tumor_vs_classic_filter.GseaPreranked"
+tumor.classic.run <- "1408460601222"
+tumor.classic.pos.file <- gsea_result_filename(tumor.classic.template, tumor.classic.run, "pos")
+tumor.classic.neg.file <- gsea_result_filename(tumor.classic.template, tumor.classic.run, "neg")
+
+data[['tumor.classic.pos']] <- read.table(tumor.classic.pos.file, sep="\t", header=TRUE)
 data[['tumor.classic.pos']]$direction <- 1
 
-data[['tumor.classic.neg']] <- read.table("../data/GSEA/tumor_vs_classic_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
+data[['tumor.classic.neg']] <- read.table(tumor.classic.neg.file, sep="\t", header=TRUE)
 data[['tumor.classic.neg']]$direction <- -1
 
-data[['classic.variant.pos']] <- read.table("../data/GSEA/classic_vs_variant_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
-data[['classic.variant.pos']]$direction <- 1
+tumor.uiso.template <- "../data/GSEA/tumor_vs_uiso_filter.GseaPreranked"
+tumor.uiso.run <- "1408460539704"
+tumor.uiso.pos.file <- gsea_result_filename(tumor.uiso.template, tumor.uiso.run, "pos")
+tumor.uiso.neg.file <- gsea_result_filename(tumor.uiso.template, tumor.uiso.run, "neg")
 
-data[['classic.variant.neg']] <- read.table("../data/GSEA/classic_vs_variant_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
-data[['classic.variant.neg']]$direction <- -1
+data[['tumor.uiso.pos']] <- read.table(tumor.uiso.pos.file, sep="\t", header=TRUE)
+data[['tumor.uiso.pos']]$direction <- 1
 
-data[['tumor.variant.pos']] <- read.table("../data/GSEA/tumor_vs_variant_filter/gsea_report_for_na_pos.xls", sep="\t", header=TRUE)
+data[['tumor.uiso.neg']] <- read.table(tumor.uiso.neg.file, sep="\t", header=TRUE)
+data[['tumor.uiso.neg']]$direction <- -1
+
+tumor.variant.template <- "../data/GSEA/tumor_vs_variant_filter.GseaPreranked"
+tumor.variant.run <- "1408460663055"
+tumor.variant.pos.file <- gsea_result_filename(tumor.variant.template, tumor.variant.run, "pos")
+tumor.variant.neg.file <- gsea_result_filename(tumor.variant.template, tumor.variant.run, "neg")
+
+data[['tumor.variant.pos']] <- read.table(tumor.variant.pos.file, sep="\t", header=TRUE)
 data[['tumor.variant.pos']]$direction <- 1
 
-data[['tumor.variant.neg']] <- read.table("../data/GSEA/tumor_vs_variant_filter/gsea_report_for_na_neg.xls", sep="\t", header=TRUE)
+data[['tumor.variant.neg']] <- read.table(tumor.variant.neg.file, sep="\t", header=TRUE)
 data[['tumor.variant.neg']]$direction <- -1
 
 merged.data <- ldply(data, function(x) x[, c("NAME", "FDR.q.val", "direction")])
@@ -336,19 +356,21 @@ colnames(merged.data.wide.fdr) <- colnames(merged.data.wide)
 ## Anything that is NA is FDR = 1
 merged.data.wide.fdr[is.na(merged.data.wide.fdr)] <- 1
 
-merged.data.wide <- merged.data.wide[order(merged.data.wide.fdr$tumor.variant), ]
+merged.data.wide <- merged.data.wide[order(merged.data.wide.fdr$tumor.uiso), ]
 
-merged.data.wide$classic.variant <- as.character(merged.data.wide$classic.variant)
+merged.data.wide$tumor.uiso <- as.character(merged.data.wide$tumor.uiso)
 merged.data.wide$tumor.variant <- as.character(merged.data.wide$tumor.variant)
 merged.data.wide$tumor.classic <- as.character(merged.data.wide$tumor.classic)
 
 set.na <- is.na(merged.data.wide.fdr)
 merged.data.wide[set.na] <- "NS"
 
-merged.data.wide <- merged.data.wide[, c("tumor.variant", "tumor.classic", "classic.variant")]
+merged.data.wide <- merged.data.wide[, c("tumor.uiso", "tumor.variant", "tumor.classic")]
+merged.data.wide.fdr <- merged.data.wide.fdr[order(merged.data.wide.fdr$tumor.uiso), ]
+merged.data.wide.fdr <- merged.data.wide.fdr[, c("tumor.uiso", "tumor.variant", "tumor.classic")]
 
-colnames(merged.data.wide) <- c( "UISO vs. Tumor", "Classic vs. Tumor",
-                                 "UISO vs. Classic")
+colnames(merged.data.wide) <- c( "UISO vs. Tumor", "Variant vs. Tumor",
+                                 "Classic vs. Tumor")
 
 ```
 
@@ -465,3 +487,71 @@ antibody.xtbl <- xtable(antibody.data)
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 write.csv(antibody.data, file="tables/tables7.csv")
 ```
+
+<div style="page-break-after:always"></div>
+
+### Figure S?: qPCR detection of Merkel cell polyomavirus in MCC tumor samples
+
+qPCR was applied to MCC tumor samples in two batches: from 2011-03-16, which included samples `MT01-MT16`, and 2011-03-17, which included samples `MT17-MT24`.
+`Actin` was used as a reference gene and the `Mkl-1` cell line was used as a control in both runs.
+Plot of the $\Delta \Delta C_t$ for each sample.
+Red points indicate samples in which a precise MCV integration has been identified.
+Based on these results, the truly negative samples in this cohort are 11, 14, and 16.
+All samples were run in duplicate.
+
+```{r setupddct, echo=FALSE, warning=FALSE, message=FALSE}
+library(ddCt)
+
+## Set the genes and samples for ddCt computation
+gene.levels <- c("MCPVt", "Actin")
+name.reference.sample <- c("Mkl-1")
+name.reference.gene <- c("Actin")
+
+```
+
+```{r readdataddct, results='asis'}
+
+metadata <- read.csv("..//data/qPCR/metadata.csv")
+
+ctdata.filenames <- list('20110316'="../data/qPCR/qBiomarker_SDS_2011-03-16_14-58-36.txt",
+                         '20110317'="../data/qPCR/qBiomarker_SDS_2011-03-17_17-24.txt")
+
+data <- llply(ctdata.filenames, processct, 
+              calibrationSample=name.reference.sample, 
+              housekeepingGenes=name.reference.gene,
+              type="mean")
+
+data.melted <- ldply(data, formatctdata,
+                     gene.levels=gene.levels)
+
+colnames(data.melted)[1] <- "Date"
+
+# Remove reference gene
+data.melted <- subset(data.melted, !(Gene %in% name.reference.gene))
+data.melted$Gene <- factor(data.melted$Gene)
+
+# Merge with clinical data to identify validated MCV samples
+data.melted <- merge(data.melted, metadata, by.x="Sample", by.y="sample")
+
+
+```
+
+```{r plotddct, fig.width=10, fig.height=4}
+dodge <- position_dodge(width=0.9)
+
+p <- ggplot(data.melted, subset=!(Gene %in% name.reference.gene),
+            aes(color=validated.mcv, x=Sample, y=ddCt))
+p <- p + geom_hline(aes(yintercept=1), color="grey")
+
+p <- p + geom_point(size=6)
+p <- p + scale_color_manual(values=c("black", "red"))
+p <- p + facet_wrap( ~ Date, nrow=1, scales="free_x")
+
+p <- p + labs(y=expression(Delta~Delta~C[t]))
+p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0.5),
+                            axis.text.y=element_text(size=18),
+                            axis.title=element_text(size=20),
+                            legend.position="none")
+print(p)
+```
+
