@@ -21,7 +21,10 @@ library(dendextend)
 library(Vennerable)
 library(rgl)
 library(scatterplot3d)
-options(xtable.type="html")
+
+
+options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
+
 ```
 
 ```{r loadexpr, echo=FALSE}
