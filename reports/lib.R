@@ -23,3 +23,34 @@ usefulpdata <- function(eset, cols=c("sample", "MCPyV.status", "classic", "class
   pData(eset)[, cols]
   
 }
+
+
+processct <- function(filename, ...) {
+  CtData <- SDMFrame(filename)
+  
+  result <- ddCtExpression(CtData, ...)
+  result
+  
+}
+
+formatctdata <- function(result, gene.levels) {
+  exprs.melted <- melt(exprs(result))
+  Ct.melted <- melt(Ct(result))
+  Cterrs.melted <- melt(CtErr(result))
+  ddCt.melted <- melt(ddCt(result))
+  dCt.melted <- melt(dCt(result))
+  dCterrs.melted <- melt(dCtErr(result))
+  CN.melted <- melt(2**(-dCt(result)))
+  
+  data.melted <- data.frame(Gene=factor(exprs.melted$Detector,
+                                        levels=gene.levels, ordered=TRUE),
+                            Sample=factor(exprs.melted$Sample), 
+                            Ct=Ct.melted$value,
+                            ddCt=ddCt.melted$value,
+                            dCt=dCt.melted$value,
+                            dCtSE=dCterrs.melted$value,
+                            CopyNumber=CN.melted$value) 
+  
+  data.melted
+  
+}
