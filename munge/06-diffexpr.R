@@ -47,6 +47,19 @@ ProjectTemplate::cache('fit2.tumor.vs.cell')
 
 # Write out data to run in GSEA
 # Needs to source("./lib/gsea_helpers.R")
+tumor.classic <- grep("MT..|Mkl|Waga", sampleNames(eset.original.filter), value=TRUE)
+tumor.variant <- grep("MT..|MCC..", sampleNames(eset.original.filter), value=TRUE)
+tumor.uiso <- grep("MT..|UISO", sampleNames(eset.original.filter), value=TRUE)
+
+eset2gct(eset.original[, tumor.classic], filename="./data/GSEA/tumor_vs_classic.gct")
+write_class(pData(eset.original[, tumor.classic]), "classic", filename="./data/GSEA/tumor_vs_classic.cls")
+
+eset2gct(eset.original[, tumor.variant], filename="./data/GSEA/tumor_vs_variant.gct")
+write_class(pData(eset.original[, tumor.variant]), "classic", filename="./data/GSEA/tumor_vs_variant.cls")
+
+eset2gct(eset.original[, tumor.uiso], filename="./data/GSEA/tumor_vs_uiso.gct")
+write_class(pData(eset.original[, tumor.uiso]), "classic", filename="./data/GSEA/tumor_vs_uiso.cls")
+
 eset2chip(eset.original.filter, filename="./data/GSEA/tumor_classic_variant_filter.chip")
 fit2rnk(fit=fit2.tumor.vs.cell, stat="t", coef="Tumor.Classic", filename="./data/GSEA/tumor_vs_classic_filter.rnk")
 fit2rnk(fit=fit2.tumor.vs.cell, stat="t", coef="Tumor.Variant", filename="./data/GSEA/tumor_vs_variant_filter.rnk")

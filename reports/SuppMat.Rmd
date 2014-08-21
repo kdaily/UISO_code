@@ -39,9 +39,11 @@ load("../cache/eset.original.filter.RData")
 dataset <- eset.original.filter
 ```
 
-### Figure S0: Scatterplot matrix of first three principal components.
+### Figure S1: UISO and other variant MCC cell lines cluster distinctly from classic MCC cell lines and MCC tumor samples.
 
-```{r figs0, fig.width=10, fig.height=10}
+Scatterplot matrix of first three principal components.
+
+```{r figs1, fig.width=10, fig.height=10}
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
 pc <- pca$x
 
@@ -96,17 +98,20 @@ p <- p + theme_bw() + theme(legend.position="top",
                             axis.text=element_blank(),
                             legend.title=element_text(size=14),
                             legend.text=element_text(size=12))
-p
+
+print(p)
+
+# ggsave("../graphs/figS1.pdf", p, width=10, height=10)
 
 ```
 
 <div style="page-break-after:always"></div>
 
-### Figure S1: The classic cell lines are more similar to MCC tumor samples than the UISO cell line.
+### Figure S2: The classic cell lines are more similar to MCC tumor samples than the variant cell lines.
 
-Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between different cell line samples (WaGa, Mkl-1 and UISO) and between cell line and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
+Boxplots of pairwise Spearman correlations of global, variance-filtered probeset expression signatures between between cell lines and tumor samples. For each box: middle bar, median; box, inter-quartile range (middle 50% of data); bars extend to 1.5 times the inter-quartile range. The color of individual points indicates the MCV status of the tumor samples.
 
-```{r prepfigS1, message=FALSE, warning=FALSE, echo=FALSE}
+```{r prepfigS2, message=FALSE, warning=FALSE, echo=FALSE}
 
 # MCC samples only, don't use MC01 since it's a singleton
 
@@ -162,45 +167,24 @@ dataset.cor.melted <- dataset.cor.melted[, c('sample', 'variable', 'value', 'cla
 
 # Add some grouping factors
 dataset.cor.melted <- transform(dataset.cor.melted,
-                                comparison=factor(paste(classic.x, classic.y, sep=".")),
-                                tumorORnot=factor(dataset.cor.melted$classic.y == "Tumor",
-                                                  labels=c("Cell line vs. cell line", "Cell line vs. tumor")))
+                                comparison=factor(paste(classic.x, classic.y, sep=".")))
+
+dataset.cor.melted <- subset(dataset.cor.melted, classic.y == "Tumor")
 
 dataset.cor.melted$comparison <- gsub("CellLine", "", dataset.cor.melted$comparison)
-
-dataset.cor.melted$finalcomp <- NULL
-
-classicvsvariant <- with(dataset.cor.melted, 
-                         comparison %in% c("Classic.Variant", "Variant.Classic"))
-dataset.cor.melted$finalcomp[classicvsvariant] <- "ClassicVariant"
-
-classicvsuiso <- with(dataset.cor.melted, 
-                      comparison %in% c("Classic.UISO", "UISO.Classic"))
-dataset.cor.melted$finalcomp[classicvsuiso] <- "ClassicUISO"
-
-variantvsuiso <- with(dataset.cor.melted, 
-                      comparison %in% c("Variant.UISO", "UISO.Variant"))
-dataset.cor.melted$finalcomp[variantvsuiso] <- "VariantUISO"
-
-classicvsclassic <- with(dataset.cor.melted, 
-                      comparison %in% c("Classic.Classic"))
-dataset.cor.melted$finalcomp[classicvsclassic] <- "ClassicClassic"
-
-dataset.cor.melted$finalcomp <- ifelse(is.na(dataset.cor.melted$finalcomp),
-                                       as.character(dataset.cor.melted$comparison),
-                                       dataset.cor.melted$finalcomp)
+dataset.cor.melted$MCPyV.status <- factor(dataset.cor.melted$MCPyV.status, levels=c("Virus positive", "Virus negative"), ordered=TRUE)
 
 ```
 
-```{r figS1, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=8}
+```{r figS2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=8}
 
 # plot
-p <- ggplot(dataset.cor.melted, aes(x=finalcomp, y=value))
+p <- ggplot(dataset.cor.melted, aes(x=comparison, y=value))
 p <- p + geom_boxplot(notch=FALSE, outlier.size=0)
 p <- p + geom_jitter(aes(color=MCPyV.status, shape=MCPyV.status), position=position_jitter(width=0.1), alpha=0.8)
-p <- p + facet_grid(. ~ tumorORnot, scales="free_x")
+# p <- p + facet_grid(. ~ tumorORnot, scales="free_x")
 p <- p + labs(x="", y=expression(Correlation~(rho)))
-p <- p + scale_color_brewer(palette='Set1')
+p <- p + scale_color_manual(values=c("blue", "red"))
 p <- p + guides(colour=guide_legend("Tumor MCV Status"), shape=guide_legend("Tumor MCV Status"))
 p <- p + ylim(c(0.5,1))
 p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0.5), 
@@ -214,7 +198,7 @@ p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0
 
 print(p)
 
-ggsave("../graphs/figS1.pdf", p, width=16, height=8)
+ggsave("../graphs/figS2.pdf", p, width=8, height=6)
 
 ```
 
@@ -246,6 +230,7 @@ rownames(fit2.data) <- c("MCV Status", "Primary vs. Metastasis", "Recurrence", "
 
 colnames(fit2.data) <- c("Class 1", "Class 2", "# Significant Probesets", "Minimum q-value")
 fit2.xtbl <- xtable(fit2.data, align=c('r', 'r', 'r', 'c', 'c'))
+digits(fit2.xtbl) <- c(0, 0, 0, 0, 5)
 print(fit2.xtbl, sanitize.text.function=I, include.rownames=TRUE)
 write.csv(fit2.data, file="tables/tables1.csv")
 
@@ -541,7 +526,7 @@ dodge <- position_dodge(width=0.9)
 
 p <- ggplot(data.melted, subset=!(Gene %in% name.reference.gene),
             aes(color=validated.mcv, x=Sample, y=ddCt))
-p <- p + geom_hline(aes(yintercept=1), color="grey")
+p <- p + geom_hline(aes(yintercept=0), color="grey")
 
 p <- p + geom_point(size=6)
 p <- p + scale_color_manual(values=c("black", "red"))

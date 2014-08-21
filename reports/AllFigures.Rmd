@@ -91,7 +91,7 @@ foo <- dev.off() # so device number is not printed.
 Figure 1B: UISO cell line samples are in a distinct group from MCC tumor samples and classic MCC cell lines.
 --------------------
 
-Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by PC’s one and two are 23% and 20%, respectively (PC3: 7%).
+Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by the first three principal components are 27%, 20%, and 8%, respectively.
 
 ```{r fig1b, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 ## Plot on PC1 and PC2, PC3
