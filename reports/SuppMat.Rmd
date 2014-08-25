@@ -204,6 +204,73 @@ ggsave("../graphs/figS2.pdf", p, width=8, height=6)
 
 <div style="page-break-after:always"></div>
 
+### Figure S3: qPCR detection of Merkel cell polyomavirus in MCC tumor samples
+
+qPCR was applied to MCC tumor samples in two batches: from 2011-03-16, which included samples `MT01-MT16`, and 2011-03-17, which included samples `MT17-MT24`.
+`Actin` was used as a reference gene and the `Mkl-1` cell line was used as a control in both runs.
+Plot of the $\Delta \Delta C_t$ for each sample.
+Red points indicate samples in which a precise MCV integration has been identified.
+Based on these results, the truly negative samples in this cohort are 11, 14, and 16.
+All samples were run in duplicate.
+
+```{r setupddct, echo=FALSE, warning=FALSE, message=FALSE}
+library(ddCt)
+
+## Set the genes and samples for ddCt computation
+gene.levels <- c("MCPVt", "Actin")
+name.reference.sample <- c("Mkl-1")
+name.reference.gene <- c("Actin")
+
+```
+
+```{r readdataddct, results='asis'}
+
+metadata <- read.csv("..//data/qPCR/metadata.csv")
+
+ctdata.filenames <- list('20110316'="../data/qPCR/qBiomarker_SDS_2011-03-16_14-58-36.txt",
+                         '20110317'="../data/qPCR/qBiomarker_SDS_2011-03-17_17-24.txt")
+
+data <- llply(ctdata.filenames, processct, 
+              calibrationSample=name.reference.sample, 
+              housekeepingGenes=name.reference.gene,
+              type="mean")
+
+data.melted <- ldply(data, formatctdata,
+                     gene.levels=gene.levels)
+
+colnames(data.melted)[1] <- "Date"
+
+# Remove reference gene
+data.melted <- subset(data.melted, !(Gene %in% name.reference.gene) & !())
+data.melted$Gene <- factor(data.melted$Gene)
+
+# Merge with clinical data to identify validated MCV samples
+data.melted <- merge(data.melted, metadata, by.x="Sample", by.y="sample")
+
+
+```
+
+```{r figS3, fig.width=10, fig.height=4}
+dodge <- position_dodge(width=0.9)
+
+p <- ggplot(data.melted, subset=!(Gene %in% name.reference.gene),
+            aes(color=validated.mcv, x=Sample, y=ddCt))
+p <- p + geom_hline(aes(yintercept=0), color="grey")
+
+p <- p + geom_point(size=6)
+p <- p + scale_color_manual(values=c("black", "red"))
+p <- p + facet_wrap( ~ Date, nrow=1, scales="free_x")
+
+p <- p + labs(y=expression(Delta~Delta~C[t]))
+p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0.5),
+                            axis.text.y=element_text(size=18),
+                            axis.title=element_text(size=20),
+                            legend.position="none")
+print(p)
+```
+
+<div style="page-break-after:always"></div>
+
 ### Table S1: Differential expression of MCC tumor samples using clinical parameters.
 
 The number of probesets that passed significance thresholds for pairwise differential expression tests (fold change > 2 and q-value < 0.05) and the minimum q-value observed in each pairwise differential expression test.
@@ -471,72 +538,5 @@ antibody.xtbl <- xtable(antibody.data)
 
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 write.csv(antibody.data, file="tables/tables7.csv")
-```
-
-<div style="page-break-after:always"></div>
-
-### Figure S?: qPCR detection of Merkel cell polyomavirus in MCC tumor samples
-
-qPCR was applied to MCC tumor samples in two batches: from 2011-03-16, which included samples `MT01-MT16`, and 2011-03-17, which included samples `MT17-MT24`.
-`Actin` was used as a reference gene and the `Mkl-1` cell line was used as a control in both runs.
-Plot of the $\Delta \Delta C_t$ for each sample.
-Red points indicate samples in which a precise MCV integration has been identified.
-Based on these results, the truly negative samples in this cohort are 11, 14, and 16.
-All samples were run in duplicate.
-
-```{r setupddct, echo=FALSE, warning=FALSE, message=FALSE}
-library(ddCt)
-
-## Set the genes and samples for ddCt computation
-gene.levels <- c("MCPVt", "Actin")
-name.reference.sample <- c("Mkl-1")
-name.reference.gene <- c("Actin")
-
-```
-
-```{r readdataddct, results='asis'}
-
-metadata <- read.csv("..//data/qPCR/metadata.csv")
-
-ctdata.filenames <- list('20110316'="../data/qPCR/qBiomarker_SDS_2011-03-16_14-58-36.txt",
-                         '20110317'="../data/qPCR/qBiomarker_SDS_2011-03-17_17-24.txt")
-
-data <- llply(ctdata.filenames, processct, 
-              calibrationSample=name.reference.sample, 
-              housekeepingGenes=name.reference.gene,
-              type="mean")
-
-data.melted <- ldply(data, formatctdata,
-                     gene.levels=gene.levels)
-
-colnames(data.melted)[1] <- "Date"
-
-# Remove reference gene
-data.melted <- subset(data.melted, !(Gene %in% name.reference.gene))
-data.melted$Gene <- factor(data.melted$Gene)
-
-# Merge with clinical data to identify validated MCV samples
-data.melted <- merge(data.melted, metadata, by.x="Sample", by.y="sample")
-
-
-```
-
-```{r plotddct, fig.width=10, fig.height=4}
-dodge <- position_dodge(width=0.9)
-
-p <- ggplot(data.melted, subset=!(Gene %in% name.reference.gene),
-            aes(color=validated.mcv, x=Sample, y=ddCt))
-p <- p + geom_hline(aes(yintercept=0), color="grey")
-
-p <- p + geom_point(size=6)
-p <- p + scale_color_manual(values=c("black", "red"))
-p <- p + facet_wrap( ~ Date, nrow=1, scales="free_x")
-
-p <- p + labs(y=expression(Delta~Delta~C[t]))
-p <- p + theme_bw() + theme(axis.text.x=element_text(size=18, angle=270, vjust=0.5),
-                            axis.text.y=element_text(size=18),
-                            axis.title=element_text(size=20),
-                            legend.position="none")
-print(p)
 ```
 
