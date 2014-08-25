@@ -240,8 +240,8 @@ data.melted <- ldply(data, formatctdata,
 
 colnames(data.melted)[1] <- "Date"
 
-# Remove reference gene
-data.melted <- subset(data.melted, !(Gene %in% name.reference.gene) & !())
+# Remove reference gene and sample MT08, this was not used in microarray analysis
+data.melted <- subset(data.melted, !(Gene %in% name.reference.gene) & !(Sample %in% c("MT08")))
 data.melted$Gene <- factor(data.melted$Gene)
 
 # Merge with clinical data to identify validated MCV samples
