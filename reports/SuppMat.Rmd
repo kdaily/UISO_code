@@ -206,11 +206,10 @@ ggsave("../graphs/figS2.pdf", p, width=8, height=6)
 
 ### Figure S3: qPCR detection of Merkel cell polyomavirus in MCC tumor samples
 
-qPCR was applied to MCC tumor samples in two batches: from 2011-03-16, which included samples `MT01-MT16`, and 2011-03-17, which included samples `MT17-MT24`.
-`Actin` was used as a reference gene and the `Mkl-1` cell line was used as a control in both runs.
-Plot of the $\Delta \Delta C_t$ for each sample.
-Red points indicate samples in which a precise MCV integration has been identified.
-Based on these results, the truly negative samples in this cohort are 11, 14, and 16.
+qPCR was applied to MCC tumor samples in two batches: samples `MT01-MT16` and samples `MT17-MT24`.
+`Actin` was used as a reference gene and the `Mkl-1` cell line was used as a reference sample.
+The plot illustrates the $\Delta \Delta \mathrm{C}_t$ for each sample.
+Red points indicate samples in which MCV integration has been validated (to be described elsewhere).
 All samples were run in duplicate.
 
 ```{r setupddct, echo=FALSE, warning=FALSE, message=FALSE}
@@ -273,7 +272,7 @@ print(p)
 
 ### Table S1: Differential expression of MCC tumor samples using clinical parameters.
 
-The number of probesets that passed significance thresholds for pairwise differential expression tests (fold change > 2 and q-value < 0.05) and the minimum q-value observed in each pairwise differential expression test.
+The number of probesets that passed significance thresholds for pairwise differential expression tests (fold change >= 2 and q-value <= 0.05) and the minimum q-value observed in each pairwise differential expression test.
 
 ```{r TableS1, results='asis', echo=FALSE}
 load("../cache/fit2.tumors.MCPyV.status.RData")
@@ -303,9 +302,33 @@ write.csv(fit2.data, file="tables/tables1.csv")
 
 ```
 
-### Table S2: Median correlation values of cell line-tumor comparisons between Merkel cell polyomavirus positive and negative tumor samples.
+<div style="page-break-after:always"></div>
 
-```{r TableS2, echo=FALSE, results='asis', include=TRUE}
+```{r tbl2setup}
+load("../cache/fit2.tumors.MCPyV.status.RData")
+
+tbls2.lfc.thresh <- 1
+tbls2.q.thresh <- 0.05
+```
+
+### Table S2: List of significantly differentially expressed probesets between MCV positive and negative MCC tumor samples (log fold change >= `r tbls2.lfc.thresh` and q-value <= `r tbls2.q.thresh`).
+
+```{r TableS2, results='asis'}
+
+tt <- topTable(fit2.tumors.MCPyV.status, number=1e6, p=tbls2.q.thresh, lfc=tbls2.lfc.thresh)
+
+tbl <- tt[, c("gene.symbol", "logFC", "adj.P.Val")]
+colnames(tbl) <- c("gene symbol", "log fold change", "q-value")
+
+xtbl <- xtable(tbl)
+digits(xtbl) <- c(0,0,2,5)
+print(xtbl, include.rownames=TRUE)
+write.csv(tbl, file="./toptable_MCPyV_status.csv")
+```
+
+### Table S3: Median correlation values of cell line-tumor comparisons between Merkel cell polyomavirus positive and negative tumor samples.
+
+```{r TableS3, echo=FALSE, results='asis', include=TRUE}
 # Show the median correlation values by mcv status
 mcv.corr <- ddply(dataset.cor.melted, .(comparison, MCPyV.status), function(x) data.frame(median=median(x$value)))
 mcv.corr <- mcv.corr[grep("Tumor", mcv.corr$comparison), ]
@@ -321,7 +344,7 @@ write.csv(mcv.corr.cast, file="tables/tables2.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S3: Gene Set Enrichment Analysis (GSEA) on KEGG pathways using differentially expressed genes in the cell lines
+### Table S4: Gene Set Enrichment Analysis (GSEA) on KEGG pathways using differentially expressed genes in the cell lines
 
 ```{r readdata, echo=FALSE}
 # See the following script to reproduce all provided files (assumes that your current directory is the repository root):
@@ -429,7 +452,7 @@ colnames(merged.data.wide) <- c( "UISO vs. Tumor", "Variant vs. Tumor",
 To identify KEGG pathways (n = `r nrow(merged.data.wide)`) that are affected similarly, we performed three comparisons: UISO cell line vs. tumor samples, classic cell lines vs. tumor samples, and UISO cell line vs. classic cell lines. Green values are up-regulated and red values are down-regulated. Large bold values are statistically significant (FDR-adjusted p-value < `r fdr.thresh`).
 
 
-```{r TableS3, echo=FALSE, results='asis'}
+```{r TableS4, echo=FALSE, results='asis'}
 tmp <- xtable(merged.data.wide, digits=c(1,2,2,2), align=c("r", "c", "c", "c"))
 print(tmp, type='html', sanitize.text.function=I)
 write.csv(merged.data.wide, file="tables/tables3.csv")
@@ -439,7 +462,7 @@ write.csv(merged.data.wide, file="tables/tables3.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S4: Variant MCC cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
+### Table S5: Variant MCC cell line samples are not classified as MCC with a random forest classifier trained using cell line microarray expression data.
 
 The mean prediction votes of variant (MCC13, MCC26, and UISO) and classic (Mkl-1 and WaGa; labeled MCC) cell line samples are given.
 ^* The MCC samples are used for training so bias may exist.
@@ -451,7 +474,7 @@ load("../cache/rf.eset.nouiso.predict.train.RData")
 load("../cache/rf.eset.nouiso.RData")
 ```
 
-```{r TableS4, echo=FALSE, results='asis'}
+```{r TableS5, echo=FALSE, results='asis'}
 rf.eset.nouiso.predict.train <- subset(rf.eset.nouiso.predict.train, cancertype == "MCC")
 
 predictions.combined <- rbind(rf.eset.nouiso.predict, rf.eset.nouiso.predict.train)[, -ncol(rf.eset.nouiso.predict.train)]
@@ -470,9 +493,9 @@ write.csv(predictions.combined, file="tables/tables4.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S5: WaGa and Mkl-1 cell line samples (labeled MCC) held out from classifier training (out-of-bag) are classifed as MCC using random forest trained with cell line microarray expression data.
+### Table S6: WaGa and Mkl-1 cell line samples (labeled MCC) held out from classifier training (out-of-bag) are classifed as MCC using random forest trained with cell line microarray expression data.
 
-```{r TableS5, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
+```{r TableS6, echo=FALSE, results='asis', message=FALSE, warning=FALSE}
 oobvotes <- data.frame(rf.eset.nouiso$votes,
                        cancertype=rf.eset.nouiso$y)
 
@@ -504,12 +527,12 @@ write.csv(avgoobvotes.formatted, file="tables/tables5.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S6: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
+### Table S7: Short tandem repeat (STR) fingerprinting results for MCC cell lines.
 
 The WaGa, Mkl-1, and UISO cell lines were analyzed with the AmpFlSTR Identifiler PCR Amplification Kit (Applied Biosystems) while the MCC13 and MCC26 cell lines were analyzed with the PowerPlex 18D Kit (Promega).
 The two kits analyze the same 16 markers, while the Promega kit includes two additional markers (Penta D and E).
 
-```{r TableS6, results='asis', echo=FALSE}
+```{r TableS7, results='asis', echo=FALSE}
 
 str.data <- read.table("../data/str.tsv", sep="\t", header=TRUE, stringsAsFactors=FALSE)
 
@@ -528,9 +551,9 @@ write.csv(str.data, file="tables/tables6.csv")
 
 <div style="page-break-after:always"></div>
 
-### Table S7: Antibodies used in immunohistochemical analysis.
+### Table S8: Antibodies used in immunohistochemical analysis.
 
-```{r TableS7, results='asis', echo=FALSE}
+```{r TableS8, results='asis', echo=FALSE}
 
 antibody.data <- read.csv("../data/antibodies.csv")
 colnames(antibody.data) <- c("Antibody", "Company", "Product Number", "Dilution", "Antigen retrieval")
@@ -539,4 +562,3 @@ antibody.xtbl <- xtable(antibody.data)
 print(antibody.xtbl, include.rownames=FALSE, sanitize.text.function=I)
 write.csv(antibody.data, file="tables/tables7.csv")
 ```
-
