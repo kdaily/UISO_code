@@ -42,6 +42,7 @@ dataset <- eset.original.filter
 ### Figure S1: UISO and other variant MCC cell lines cluster distinctly from classic MCC cell lines and MCC tumor samples.
 
 Scatterplot matrix of first three principal components.
+MCV negative samples are indicated with a white 'x'.
 
 ```{r figs1, fig.width=10, fig.height=10}
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
@@ -208,7 +209,7 @@ ggsave("../graphs/figS2.pdf", p, width=8, height=6)
 
 qPCR was applied to MCC tumor samples in two batches: samples `MT01-MT16` and samples `MT17-MT24`.
 `Actin` was used as a reference gene and the `Mkl-1` cell line was used as a reference sample.
-The plot illustrates the $\Delta \Delta \mathrm{C}_t$ for each sample.
+The plot illustrates the DDCt for each sample.
 Red points indicate samples in which MCV integration has been validated (to be described elsewhere).
 All samples were run in duplicate.
 
@@ -325,6 +326,8 @@ digits(xtbl) <- c(0,0,2,5)
 print(xtbl, include.rownames=TRUE)
 write.csv(tbl, file="./toptable_MCPyV_status.csv")
 ```
+
+<div style="page-break-after:always"></div>
 
 ### Table S3: Median correlation values of cell line-tumor comparisons between Merkel cell polyomavirus positive and negative tumor samples.
 
