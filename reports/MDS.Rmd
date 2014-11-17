@@ -1,0 +1,65 @@
+Multidimensional Scaling of Tumor and Cell Line Microarray Expression Profiles
+========================================================
+
+```{r load, message=FALSE, warning=FALSE, echo=FALSE}
+# Here's how to compile this file in R, assuming your current directory is the repository root:
+
+# library(knitr)
+# knit("./reports/MDS.Rmd", encoding="utf-8")
+
+library(affy)
+library(ggplot2)
+library(reshape)
+library(plyr)
+library(cluster)
+library(xtable)
+library(MASS)
+library(venneuler)
+library(limma) # For vennDiagram
+library(RColorBrewer)
+library(dendextend)
+
+options(xtable.type="html")
+```
+
+```{r loadexpr, echo=FALSE, cache=TRUE}
+# load("../cache/eset.original.filter.RData")
+# dataset <- eset.original.filter
+# dataset.diss <- 1 - cor(exprs(dataset), method='spearman')
+# dataset.diss <- daisy(exprs(dataset))
+
+load("../cache/eset.tumors.RData")
+dataset <- eset.tumors
+load("../cache/rf.eset.tumorcomp.RData")
+dataset.diss <- 1 - rf.eset.tumorcomp$proximity
+
+```
+
+``` {r mds, echo=FALSE, results='asis', cache=FALSE, message=FALSE, warning=FALSE}
+d <- isoMDS(dataset.diss, trace=FALSE)
+
+k <- 2
+pam.clusters <- pam(1 - rf.eset.tumorcomp$proximity, k=k, diss=TRUE)
+```
+
+``` {r plotmds, echo=FALSE, cache=FALSE, fig.width=12, fig.height=10}
+## fit <- cmdscale(d, eig=TRUE, k=2) # k is the number of dim
+
+plotdata <- pData(dataset)
+
+plotdata <- transform(plotdata, x=d$points[,1], y=d$points[,2], 
+                      predicted=rf.eset.tumorcomp$predicted,
+                      pam=factor(pam.clusters$clustering))
+
+p <- ggplot(plotdata, aes(x=x, y=y))
+p <- p + geom_point(aes(color=MCPyV.status, shape=predicted), size=6)
+p <- p + geom_text(aes(label=rownames(plotdata)), hjust=-0.1, vjust=-0.75, size=4)
+p <- p + scale_colour_brewer("MCV status", palette="Set1")
+p <- p + scale_shape_discrete("Predicted MCV status")
+
+# p <- p + scale_color_manual("Virus status", values=c('red', 'blue', 'green'))
+# p <- p + scale_shape_manual("Sample group", values=c(19,17,18))
+# p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=c(19,19,19,19,17,17))))
+p <- p + theme_bw()
+p
+```

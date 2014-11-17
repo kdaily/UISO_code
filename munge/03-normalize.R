@@ -3,7 +3,7 @@ eset.original <- rma(data.cel)
 
 # Override the feature data with more informative gene names
 # The data is in data/fdata.hgu133a2.Rdata
-fData(eset.original) <- fdata.hgu133a2
+fData(eset.original) <- fdata.hgu133a2[featureNames(eset.original), ]
 
 ProjectTemplate::cache("eset.original")
 

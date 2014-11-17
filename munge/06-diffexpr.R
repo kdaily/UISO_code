@@ -1,6 +1,7 @@
 ## Comparisons of individual cell lines and tumor samples
 
-MCC.sample.names <- subset(sampleNames(eset.original.filter), pData(eset.original.filter)$cancertype == "MCC")
+MCC.sample.names <- subset(sampleNames(eset.original.filter),
+                           with(pData(eset.original.filter), cancertype == "MCC" & sample != "MC01"))
 
 eset.tumor.vs.cell <- eset.original.filter[, MCC.sample.names]
 
@@ -8,29 +9,64 @@ eset.tumor.vs.cell <- eset.original.filter[, MCC.sample.names]
 ## array.weights <- arrayWeights(eset.tumor.vs.cell, design.tumor.vs.cell)
 array.weights <- NULL
 
-design.tumor.vs.cell <- model.matrix(~0 + pData(eset.tumor.vs.cell)$class)
-colnames(design.tumor.vs.cell) <- levels(pData(eset.tumor.vs.cell)$class)
+design.tumor.vs.cell <- model.matrix(~0 + pData(eset.tumor.vs.cell)$classic)
+colnames(design.tumor.vs.cell) <- levels(pData(eset.tumor.vs.cell)$classic)
 
-cont.matrix.tumor.vs.cell <- makeContrasts(Tumor.Mkl1=Mkl1 - Tumor,
-                                           Tumor.WaGa=WaGa- Tumor,
-                                           Tumor.UISO=UISO - Tumor,
-                                           Mkl1.WaGa=Mkl1 - WaGa,
-                                           Mkl1.UISO=Mkl1 - UISO,
-                                           WaGa.UISO=WaGa - UISO,
+cont.matrix.tumor.vs.cell <- makeContrasts(Tumor.Classic=Tumor - ClassicCellLine,
+                                           Tumor.Variant=Tumor - VariantCellLine,
+                                           Tumor.UISO=Tumor - UISOCellLine,
+#                                            Classic.Variant=ClassicCellLine - VariantCellLine,
+#                                            Classic.UISO=ClassicCellLine - UISOCellLine,
+#                                            Variant.UISO=VariantCellLine - UISOCellLine,
                                            levels=design.tumor.vs.cell)
 
-fit.tumor.vs.cell <- lmFit(eset.tumor.vs.cell, design.tumor.vs.cell, weights=array.weights, method="ls")
+# Fit with filtered data
+fit.tumor.vs.cell <- lmFit(eset.tumor.vs.cell, design.tumor.vs.cell,
+                           weights=array.weights, method="ls")
 fit2.tumor.vs.cell <- contrasts.fit(fit.tumor.vs.cell, cont.matrix.tumor.vs.cell)
 fit2.tumor.vs.cell <- eBayes(fit2.tumor.vs.cell)
 
+# Fit with non variance filtered data
+fit.tumor.vs.cell.nofilter <- lmFit(eset.original[, MCC.sample.names],
+                                    design.tumor.vs.cell,
+                                    weights=array.weights, method="ls")
+fit2.tumor.vs.cell.nofilter <- contrasts.fit(fit.tumor.vs.cell.nofilter, cont.matrix.tumor.vs.cell)
+fit2.tumor.vs.cell.nofilter <- eBayes(fit2.tumor.vs.cell.nofilter)
+
 testdec <- decideTests(fit2.tumor.vs.cell, adjust.method="BH", p.value=0.05, lfc=1)
-testdec.df <- abs(as.data.frame(testdec)[, c('Tumor.UISO', 'Tumor.Mkl1', 'Tumor.WaGa')])
+testdec.df <- abs(as.data.frame(testdec)[, c('Tumor.Classic', 'Tumor.Variant', 'Tumor.UISO')])
 
 testdec.list <- list(Tumor.UISO=rownames(subset(testdec.df, Tumor.UISO != 0)),
-                     Tumor.Mkl1=rownames(subset(testdec.df, Tumor.Mkl1 != 0)),
-                     Tumor.WaGa=rownames(subset(testdec.df, Tumor.WaGa != 0)))
+                     Tumor.Classic=rownames(subset(testdec.df, Tumor.Classic != 0)),
+                     Tumor.Variant=rownames(subset(testdec.df, Tumor.Variant != 0)))
 
 ProjectTemplate::cache('testdec')
 ProjectTemplate::cache('testdec.list')
 ProjectTemplate::cache('testdec.df')
 ProjectTemplate::cache('fit2.tumor.vs.cell')
+
+# Write out data to run in GSEA
+# Needs to source("./lib/gsea_helpers.R")
+tumor.classic <- grep("MT..|Mkl|Waga", sampleNames(eset.original.filter), value=TRUE)
+tumor.variant <- grep("MT..|MCC..", sampleNames(eset.original.filter), value=TRUE)
+tumor.uiso <- grep("MT..|UISO", sampleNames(eset.original.filter), value=TRUE)
+
+eset2gct(eset.original[, tumor.classic], filename="./data/GSEA/tumor_vs_classic.gct")
+write_class(pData(eset.original[, tumor.classic]), "classic", filename="./data/GSEA/tumor_vs_classic.cls")
+
+eset2gct(eset.original[, tumor.variant], filename="./data/GSEA/tumor_vs_variant.gct")
+write_class(pData(eset.original[, tumor.variant]), "classic", filename="./data/GSEA/tumor_vs_variant.cls")
+
+eset2gct(eset.original[, tumor.uiso], filename="./data/GSEA/tumor_vs_uiso.gct")
+write_class(pData(eset.original[, tumor.uiso]), "classic", filename="./data/GSEA/tumor_vs_uiso.cls")
+
+eset2chip(eset.original.filter, filename="./data/GSEA/tumor_classic_variant_filter.chip")
+fit2rnk(fit=fit2.tumor.vs.cell, stat="t", coef="Tumor.Classic", filename="./data/GSEA/tumor_vs_classic_filter.rnk")
+fit2rnk(fit=fit2.tumor.vs.cell, stat="t", coef="Tumor.Variant", filename="./data/GSEA/tumor_vs_variant_filter.rnk")
+fit2rnk(fit=fit2.tumor.vs.cell, stat="t", coef="Tumor.UISO", filename="./data/GSEA/tumor_vs_uiso_filter.rnk")
+
+# Write out with unfiltered data
+eset2chip(eset.original, filename="./data/GSEA/tumor_classic_variant.chip")
+fit2rnk(fit=fit2.tumor.vs.cell.nofilter, stat="t", coef="Tumor.Classic", filename="./data/GSEA/tumor_vs_classic.rnk")
+fit2rnk(fit=fit2.tumor.vs.cell.nofilter, stat="t", coef="Tumor.Variant", filename="./data/GSEA/tumor_vs_variant.rnk")
+fit2rnk(fit=fit2.tumor.vs.cell.nofilter, stat="t", coef="Tumor.UISO", filename="./data/GSEA/tumor_vs_uiso.rnk")
