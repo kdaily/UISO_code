@@ -18,8 +18,13 @@ library(venneuler)
 library(limma) # For vennDiagram
 library(RColorBrewer)
 library(dendextend)
+library(Vennerable)
+library(rgl)
+library(scatterplot3d)
 
-options(xtable.type="html")
+
+options(xtable.type="html", xtable.caption.placement="top", xtable.include.row.names=FALSE)
+
 ```
 
 ```{r loadexpr, echo=FALSE}
@@ -36,6 +41,14 @@ plotdata <- data.frame(pc, sample=rownames(pc))
 rownames(plotdata) <- rownames(pc)
 plotdata <- cbind(plotdata[rownames(pc), ], pData(dataset)[rownames(pc), ])
 
+plotdata$newclass <- ifelse(plotdata$class == "Tumor",
+                           as.character(plotdata$cancertype),
+                           as.character(plotdata$class))
+
+plotdata$newclass <- factor(plotdata$newclass, ordered=TRUE,
+                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC13", "MCC26", "MCC", "SCLC"),
+                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC13", "MCC26", "MCC Tumor", "SCLC Tumor"))
+
 pca.summary <- summary(pca)
 pca.var <- data.frame(variance=pca.summary$importance[2, ], pc=names(pca.summary$importance[2, ]))
 
@@ -48,8 +61,6 @@ Figure 1A: UISO cell lines cluster separately from other MCC samples and cell li
 Hierarchical clustering of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples. Average linkage was applied for merging clusters to the variance-filtered probeset expression values. One minus Spearman's rank correlation coefficient was used as a dissimilarity metric.
 
 ```{r fig1a, message=FALSE, warning=FALSE, echo=FALSE, fig.width=12, fig.height=6}
-dataset <- eset.original.filter
-
 d <- as.dist(1 - cor(exprs(dataset), method="spearman"))
 agnes.hc <- agnes(d, diss=TRUE, method='average')
 
@@ -72,67 +83,63 @@ plot(hc, xlab="Dissimilarity = 1 - Correlation", main="")
 text(x=5.4, y=c(0.3, 0.27, 0.24),
      labels=c("MCV-positive", "MCV-negative", "Not tested"),
      col=c("red", "blue", "black"), cex=1.25)
-dev.off() # so device number is not printed.
+foo <- dev.off() # so device number is not printed.
 
 ```
+
 
 Figure 1B: UISO cell line samples are in a distinct group from MCC tumor samples and classic MCC cell lines.
 --------------------
 
-Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by PC’s one and two are 23% and 20%, respectively (PC3: 7%).
+Principal components analysis of microarray expression data from MCC cell lines and MCC and SCLC frozen tumor samples computed from variance-filtered probeset expression values for each sample. The variance in the expression data accounted for by the first three principal components are 27%, 20%, and 8%, respectively.
 
 ```{r fig1b, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
-## Plot on PC1 and PC2
-pc.data <- data.frame(pc, sample=rownames(pc))
-rownames(pc.data) <- rownames(pc)
-pc.data <- cbind(pc.data[rownames(pc), ], pData(dataset)[rownames(pc), ])
-
-pc.data$newclass <- ifelse(pc.data$class == "Tumor",
-                           as.character(pc.data$cancertype),
-                           as.character(pc.data$class))
-
-pc.data$newclass <- factor(pc.data$newclass, ordered=TRUE,
-                           levels=c("MC01", "WaGa", "Mkl1", "UISO", "MCC", "SCLC"),
-                           labels=c("MC01", "WaGa", "Mkl-1", "UISO", "MCC Tumor", "SCLC Tumor"))
-
-p <- ggplot(pc.data, aes(x=PC1, y=PC2)) + geom_point(aes(shape=sample.type, color=newclass),
-                                                     size=6)
-
-p <- p + xlim(-80, 140)
-
+## Plot on PC1 and PC2, PC3
+# pairs plot
 type.colors <- c(brewer.pal(9, "Blues")[c(8, 4, 6)], 
-                 brewer.pal(9, "Greens")[c(7)], 
+                 brewer.pal(9, "Greens")[c(8)], 
+                 brewer.pal(9, "Oranges")[c(4, 6)], 
                  brewer.pal(9, "Blues")[c(9)], 
                  brewer.pal(9, "Reds")[c(8)]) 
 
-p <- p + scale_color_manual("Sample group", values=type.colors)
-p <- p + scale_shape_manual("Sample type", values=c(19,17), guide = 'none')
-p <- p + guides(color=guide_legend("Sample group", override.aes = list(shape=c(19,19,19,19,17,17))))
+plotdata$color <- type.colors[match(plotdata$newclass, levels(plotdata$newclass))]
 
-xlabel <- substitute(paste("Principal component 1 (", sigma^2, " = ", s2, ")"),
-                     list(s2=round(pca.var[1, "variance"], 2)))
-ylabel <- substitute(paste("Principal component 2 (", sigma^2, " = ", s2, ")"),
-                     list(s2=round(pca.var[2, "variance"], 2)))
+s3d <- scatterplot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+                     xlab="PC1", ylab="PC2", zlab="PC3", 
+                     color=plotdata$color,
+                     col.grid="lightblue",
+                     col.axis="blue",
+                     pch=20,
+                     angle=40,
+                     scale.y=0.75,
+                     lwd=6
+                     )
 
-p <- p + labs(x=xlabel, y=ylabel)
+pdf("../graphs/fig1b.pdf", width=8, height=8)
+s3d <- scatterplot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+                     xlab="PC1", ylab="PC2", zlab="PC3", 
+                     color=plotdata$color,
+                     col.grid="lightblue",
+                     col.axis="blue",
+                     pch=20,
+                     angle=40,
+                     scale.y=0.75,
+                     lwd=6
+                     )
+foo <- dev.off()
 
-title.size <- 20
-text.size <- 18
-p <- p + theme_bw() + theme(legend.position=c(0.87, 0.87),
-                            #legend.position=c(0.15, 0.85),
-                            legend.title=element_text(size=title.size),
-                            legend.text=element_text(size=text.size),
-                            legend.background=element_rect(colour="black"),
-                            axis.title.x=element_text(size=title.size),
-                            axis.title.y=element_text(size=title.size, angle=90),
-                            # axis.text.x=element_text(size=text.size),
-                            # axis.text.y=element_text(size=text.size),
-                            axis.text.x=element_blank(), axis.text.y=element_blank(),
-                            panel.background=element_rect())
-
-print(p)
-
-# ggsave("../graphs/fig1b.pdf", p, width=10, height=10)
+# # Look at plot in 3D and rotate
+# library(rgl)
+# pp <- dget("pca3dview.R")
+# 
+# plot3d(x=plotdata$PC1, y=plotdata$PC2, z=plotdata$PC3, 
+#        xlab="PC1", ylab="PC2", zlab="PC3", 
+#        type="s", col=plotdata$color, size=1,
+#        box=TRUE, axes=TRUE)
+# par3d(pp)
+# 
+# pp <- par3d(no.readonly=TRUE)
+# dput(pp, file="pca3dview.R", control = "all")
 
 ```
 
@@ -152,32 +159,37 @@ load("../cache/testdec.df.RData")
 # Install from R-forge, then install needed libraries
 # If that fails, then a similar plot can be made with venneuler
 
-# testdec.venn <- Venn(testdec.list)
-# pdf("graphs/proportionalvenn.cellvstumor.pdf", width=10, height=10)
-# plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
-# dev.off()
+testdec.venn <- Venn(testdec.list)
+pdf("../graphs/proportionalvenn.cellvstumor.pdf", width=15, height=15)
+plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
+foo <- dev.off()
 
-# This is a workaround using venneuler
-# The plot is representative of the one in the publication
-setmember <- with(ldply(testdec.list, .fun=length), rep(.id, V1))
-element <- as.character(unlist(testdec.list))
-m <- data.frame(element, setmember)
-v <- venneuler(m)
-# pdf("graphs/fig2.pdf", width=10, height=10)
-plot(v)
-# dev.off()
+plot(testdec.venn, doWeights=TRUE, show=list(Faces=TRUE), type="circles")
+
+# # This is a workaround using venneuler
+# # The plot is representative of the one in the publication
+# setmember <- with(ldply(testdec.list, .fun=length), rep(.id, V1))
+# element <- as.character(unlist(testdec.list))
+# m <- data.frame(element, setmember)
+# v <- venneuler(m)
+# # pdf("graphs/fig2.pdf", width=10, height=10)
+# plot(v)
+# # dev.off()
 ```
 ```{r fig2_2, message=FALSE, warning=FALSE, echo=FALSE, fig.width=10, fig.height=10}
 # # Regular venn diagram to see the counts of things in each set
-# pdf("graphs/fig2.pdf")
-vennDiagram(testdec[, 1:3])
+# pdf("../graphs/fig2_2.pdf", width=12, height=12)
+# vennDiagram(testdec[, 1:3])
 # dev.off()
 ```
 
 Figure 3: Variant cell lines UISO, MCC13, and MCC26 are in a distinct group from other MCC cell lines and neuroendocrine lines from the Cancer Cell Line Encyclopedia.
 --------------------
-```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=TRUE}
+```{r loadccle, message=FALSE, warning=FALSE, echo=FALSE, cache=FALSE}
 load("../cache/eset.batcheffect.nomod.RData")
+```
+
+```{r pcaccle, message=FALSE, warning=FALSE, echo=FALSE, cache=FALSE}
 
 dataset <- eset.batcheffect.nomod
 pca <- prcomp(t(exprs(dataset)), scale=TRUE, center=TRUE)
@@ -274,10 +286,11 @@ load("../cache/rf.predict.RData")
 ```
 
 ``` {r table1, echo=FALSE, results='asis'}
-rf.predict$class <- factor(rf.predict$class, levels=c("WaGa", "Mkl1", "MC01", "UISO"), 
-                           labels=c("WaGa", "Mkl-1", "MC01", "UISO"))
-rf.predict.mean <- ddply(rf.predict, "class", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
-rownames(rf.predict.mean) <- rf.predict.mean$class
+rf.predict$class2 <- factor(rf.predict$class,
+                            levels=c("WaGa", "Mkl1", "MC01", "MCC13", "MCC26", "UISO"), 
+                            labels=c("WaGa", "Mkl-1", "MC01", "MCC13", "MCC26", "UISO"))
+rf.predict.mean <- ddply(rf.predict, "class2", function(x) data.frame(MCC=mean(x$MCC), SCLC=mean(x$SCLC)))
+rownames(rf.predict.mean) <- rf.predict.mean$class2
 rf.predict.mean <- rf.predict.mean[, -1]
 rf.predict.mean.xtable <- xtable(rf.predict.mean, align='rcc')
 print(rf.predict.mean.xtable)
