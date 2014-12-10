@@ -2,6 +2,10 @@ Code for *"Assessment of Cancer Cell Line Representativeness using Microarrays f
 
 This repository contains all of the code necessary to run data analysis and produce figures and tables for the publication.
 
+See source for publication at:
+
+https://github.com/BrownellLab/UISO_JID
+
 Setup
 -----
 
